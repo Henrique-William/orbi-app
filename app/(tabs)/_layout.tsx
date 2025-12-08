@@ -1,6 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -37,9 +36,9 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
 
           let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
           if (route.name === 'index') iconName = isFocused ? 'home' : 'home-outline';
-          else if (route.name === 'explore') iconName = isFocused ? 'people' : 'people-outline'; // Friends
-          else if (route.name === 'calendar') iconName = isFocused ? 'calendar' : 'calendar-outline';
-          else if (route.name === 'chat') iconName = isFocused ? 'chatbubble-ellipses' : 'chatbubble-ellipses-outline';
+          else if (route.name === 'routes') iconName = isFocused ? 'analytics' : 'analytics-outline';
+          else if (route.name === 'statistics') iconName = isFocused ? 'stats-chart' : 'stats-chart-outline';
+          else if (route.name === 'notifications') iconName = isFocused ? 'notifications' : 'notifications-outline';
 
           return (
             <TouchableOpacity
@@ -71,9 +70,10 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="explore" options={{ title: 'Friends' }} />
-      <Tabs.Screen name="calendar" options={{ title: 'Calendar' }} />
-      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
+      <Tabs.Screen name="routes" options={{ title: 'Routes' }} />
+      
+      <Tabs.Screen name="statistics" options={{ title: 'Statistics' }} />
+      <Tabs.Screen name="notifications" options={{ title: 'Notifications' }} />
     </Tabs>
   );
 }
