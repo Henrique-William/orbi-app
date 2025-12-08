@@ -1,10 +1,26 @@
-import { Text } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
 
 export default function Routes() {
   return (
-    <SafeAreaView>
-      <Text>Routes Page!</Text>
-    </SafeAreaView>
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.content}>
+        <ThemedText>Routes Page!</ThemedText>
+      </SafeAreaView>
+    </ThemedView>
   )
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+  },
+});

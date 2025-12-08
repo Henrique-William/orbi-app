@@ -1,23 +1,22 @@
+import { Colors } from '@/constants/theme'; // Importe daqui
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-const COLORS = {
-  background: '#18181b',
-  primary: '#6366f1',
-  inactive: '#d0d0d6ff',  
-  white: '#FFFFFF'
-};
-
 const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   const insets = useSafeAreaInsets();
+  const theme = useColorScheme() ?? 'light';
+  
+  const activeColor = Colors[theme].tabIconSelected;
+  const inactiveColor = Colors[theme].tabIconDefault;
+  const backgroundColor = Colors[theme].background;
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + 10 }]}>
-
-      {/* Container Principal que segura a barra e o botão */}
-      <View style={styles.pillContainer}>
+      <View style={[styles.pillContainer, { backgroundColor: '#18181b' }]}> 
+        
         {state.routes.slice(0, 4).map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -34,7 +33,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
             }
           };
 
-          let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
+          let iconName: any = 'home-outline';
           if (route.name === 'index') iconName = isFocused ? 'home' : 'home-outline';
           else if (route.name === 'routes') iconName = isFocused ? 'analytics' : 'analytics-outline';
           else if (route.name === 'statistics') iconName = isFocused ? 'stats-chart' : 'stats-chart-outline';
@@ -50,7 +49,8 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
               <Ionicons
                 name={iconName}
                 size={24}
-                color={isFocused ? COLORS.primary : COLORS.inactive}
+
+                color={isFocused ? Colors.dark.tint : Colors.dark.tabIconDefault} 
               />
             </TouchableOpacity>
           );
@@ -71,7 +71,6 @@ export default function TabLayout() {
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="routes" options={{ title: 'Routes' }} />
-      
       <Tabs.Screen name="statistics" options={{ title: 'Statistics' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Notifications' }} />
     </Tabs>
@@ -90,7 +89,7 @@ const styles = StyleSheet.create({
   },
   pillContainer: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background,
+    backgroundColor: '#18181b',
     height: 60,
     borderRadius: 30,
     alignItems: 'center',
