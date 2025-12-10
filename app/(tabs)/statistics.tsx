@@ -8,10 +8,10 @@ export default function Statistics() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.content}>
-        <ThemedText>Statistics Page!</ThemedText>
+        <ThemedText type='title'>Statistic</ThemedText>
       </SafeAreaView>
     </ThemedView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -19,8 +19,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-  },
+  }
 });

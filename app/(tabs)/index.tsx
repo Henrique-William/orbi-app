@@ -8,8 +8,7 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.content}>
-        <ThemedText type="title">Home Page!</ThemedText>
-        <ThemedText type='default'>Este texto agora ficará branco no modo escuro.</ThemedText>
+        <ThemedText type='title'>Home</ThemedText>
       </SafeAreaView>
     </ThemedView>
   );
@@ -20,8 +19,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-  },
+  }
 });

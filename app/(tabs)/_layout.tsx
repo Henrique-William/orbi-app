@@ -89,11 +89,10 @@ const styles = StyleSheet.create({
   },
   pillContainer: {
     flexDirection: 'row',
-    backgroundColor: '#18181b',
     height: 60,
     borderRadius: 30,
     alignItems: 'center',
-    width: '70%',
+    width: '80%',
     justifyContent: 'space-between',
     paddingHorizontal: '5%'
   },

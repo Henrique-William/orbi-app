@@ -4,7 +4,7 @@ import { StyleSheet, Text, type TextProps } from 'react-native';
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  type?: 'small' | 'thin' | 'default' | 'title' | 'title2' | 'defaultSemiBold' | 'subtitle' | 'link';
 };
 
 export function ThemedText({
@@ -22,8 +22,11 @@ export function ThemedText({
       style={[
         { color },
         // Aplica a fonte Poppins baseada no estilo
+        type === 'small' ? styles.small : undefined,
+        type === 'thin' ? styles.thin : undefined,
         type === 'default' ? styles.default : undefined,
         type === 'title' ? styles.title : undefined,
+        type === 'title2' ? styles.title2 : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
         type === 'subtitle' ? styles.subtitle : undefined,
         type === 'link' ? styles.link : undefined,
@@ -35,6 +38,16 @@ export function ThemedText({
 }
 
 const styles = StyleSheet.create({
+  small: {
+    fontSize: 10,
+    lineHeight: 16,
+    fontFamily: 'Poppins_400Regular', // Regra 2
+  },
+  thin: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontFamily: 'Poppins_400Regular', // Regra 2
+  },
   default: {
     fontSize: 16,
     lineHeight: 24,
@@ -50,9 +63,14 @@ const styles = StyleSheet.create({
     lineHeight: 40,
     fontFamily: 'Poppins_700Bold', // Regra 2
   },
-  subtitle: {
-    fontSize: 20,
+  title2: {
+    fontSize: 24,
+    lineHeight: 32,
     fontFamily: 'Poppins_700Bold', // Regra 2
+  },
+  subtitle: {
+    fontSize: 12,
+    fontFamily: 'Poppins_400Regular', // Regra 2
   },
   link: {
     lineHeight: 30,
