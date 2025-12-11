@@ -1,48 +1,87 @@
-import { ScrollView, StyleSheet, View } from 'react-native'; // 1. Importe ScrollView
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Platform, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import RouteThumbnail from '@/components/route-thumbnail';
+import RouteThumbnail, { RouteData } from '@/components/route-thumbnail';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
+const LOCAL_MACHINE_IP = '192.168.1.60'; 
+
+const API_URL = Platform.select({
+  // Android no dispositivo físico precisa do IP real e da porta correta (8080)
+  android: `http://${LOCAL_MACHINE_IP}:8080/api/route`,
+  ios: `http://${LOCAL_MACHINE_IP}:8080/api/route`,
+  default: `http://localhost:8080/api/route`,
+});
+
 export default function Routes() {
+  const [routes, setRoutes] = useState<RouteData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchRoutes = async () => {
+    try {
+      console.log("Fetching from:", API_URL);
+      const response = await fetch(API_URL!); // Adicionar '!' pois definimos uma string padrão
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setRoutes(data);
+    } catch (error) {
+      console.error("Erro ao buscar rotas:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoutes();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchRoutes();
+  };
+
   return (
     <ThemedView style={styles.container}>
-      {/* 2. SafeAreaView com flex: 1 para garantir que o ScrollView tenha espaço */}
       <SafeAreaView style={styles.safeArea}>
-
-        {/* 3. Adicione o ScrollView envolvendo o conteúdo */}
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false} // Opcional: esconde a barra de rolagem
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           <View style={styles.dropdown}></View>
           <ThemedText type='title' style={styles.title}>My rides</ThemedText>
 
-          {/* Seus componentes de rota */}
-          <RouteThumbnail />
-          <RouteThumbnail />
-          <RouteThumbnail />
-          <RouteThumbnail />
-
-          {/* <FlatList
-            data={suaListaDeRotas} // Array com os dados
-            renderItem={({ item }) => <RouteThumbnail data={item} />} // Como renderizar cada item
-            contentContainerStyle={styles.scrollContent}
-            ListHeaderComponent={
-              // O que aparece em cima da lista rolando junto
-              <>
-                <View style={styles.dropdown}></View>
-                <ThemedText type='title' style={styles.title}>My rides</ThemedText>
-              </>
-            }
-          /> */}
+          {loading ? (
+            <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+          ) : (
+            <>
+              {routes.length === 0 ? (
+                <ThemedText>No routes found.</ThemedText>
+              ) : (
+                routes.map((routeItem) => (
+                  <RouteThumbnail 
+                    key={routeItem.id} 
+                    route={routeItem} 
+                  />
+                ))
+              )}
+            </>
+          )}
 
         </ScrollView>
-
       </SafeAreaView>
     </ThemedView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -57,6 +96,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
+    minHeight: '100%',
   },
   dropdown: {
     height: 40,
