@@ -1,133 +1,118 @@
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import { format, isToday } from 'date-fns';
+import { enUS } from 'date-fns/locale';
+import React, { useMemo } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from './themed-text';
 
-import { format, isToday } from 'date-fns';
-import { enUS } from 'date-fns/locale'; // Use ptBR se quiser em português
-
-// 1. Definimos a interface das props
-export interface Delivery {
-    id: number;
-    order: number;
-    status: string;
-    dropoffAddress: string;
-    // Datas em JSON sempre vêm como string
-    pickUpDateTime?: string;
-    deliveredAt?: string;
-}
-
-export interface RouteData {
-    id: number;
-    driverName: string;
-    deliveries: Delivery[];
-    // Tornamos opcional e string para evitar o crash
-    createdAt?: string;
-}
+// Importe os tipos centralizados (ajuste o caminho conforme onde criou o arquivo)
+import { RouteData } from '@/constants/types/interfaces';
 
 interface RouteThumbnailProps {
     route: RouteData;
 }
 
-// 2. Recebemos a prop 'route'
 export default function RouteThumbnail({ route }: RouteThumbnailProps) {
     const theme = useColorScheme() ?? 'light';
-    const cardBackgroundColor = theme === 'light' ? '#F4F4F5' : '#27272a';
-    const iconPrimaryColor = Colors[theme].tint;
-    const inactiveColor = Colors[theme].inactive;
 
-    console.log("DADOS DA ROTA:", JSON.stringify(route, null, 2));
-    // Formatação da data de criação da rota
-    const dateToUse = route.createdAt ? new Date(route.createdAt) : new Date();
-    let formattedDate = '';
-
-    if (isToday(dateToUse)) {
-        // Se for hoje: "Today, December 10"
-        formattedDate = `Today, ${format(dateToUse, 'MMMM d', { locale: enUS })}`;
-    } else {
-        // Se NÃO for hoje: "Tuesday, December 9" (Dia da semana + Mês + Dia)
-        formattedDate = format(dateToUse, 'EEEE, MMMM d', { locale: enUS });
-    }
-
-    // Lógica para pegar o primeiro e último ponto para exibição
-    const firstDelivery = route.deliveries.length > 0 ? route.deliveries[0] : null;
-    const lastDelivery = route.deliveries.length > 1 ? route.deliveries[route.deliveries.length - 1] : null;
-
-    const formatTime = (dateString?: string) => {
-        if (!dateString) return '--:--';
-
-        const date = new Date(dateString);
-
-        // Formata para 21:05
-        return new Intl.DateTimeFormat('pt-BR', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false
-        }).format(date);
+    // Cores derivadas do tema
+    const colors = {
+        cardBackground: theme === 'light' ? '#F4F4F5' : '#27272a',
+        iconPrimary: Colors[theme].tint,
+        inactive: Colors[theme].inactive,
+        textSecondary: Colors[theme].icon,
     };
 
+    // Lógica de Data (useMemo evita recálculos desnecessários)
+    const formattedDate = useMemo(() => {
+        const dateToUse = route.createdAt ? new Date(route.createdAt) : new Date();
+        if (isToday(dateToUse)) {
+            return `Today, ${format(dateToUse, 'MMMM d', { locale: enUS })}`;
+        }
+        return format(dateToUse, 'EEEE, MMMM d', { locale: enUS });
+    }, [route.createdAt]);
+
+    const firstDelivery = route.deliveries.at(0);
+    const lastDelivery = route.deliveries.length > 1 ? route.deliveries.at(-1) : null;
+
+    // Sub-componente interno para renderizar uma linha de entrega (DRY - Don't Repeat Yourself)
+    const DeliveryRow = ({
+        icon,
+        order,
+        timeOrStatus,
+        address,
+        isLast = false
+    }: {
+        icon: keyof typeof Ionicons.glyphMap;
+        order: number;
+        timeOrStatus: string;
+        address: string;
+        isLast?: boolean;
+    }) => (
+        <View style={styles.destinationInfo}>
+            <Ionicons name={icon} size={20} color={colors.inactive} />
+            <View style={styles.destinationAddress}>
+                <View style={styles.destinationTitle}>
+                    <ThemedText type='thin'>Stop #{order}</ThemedText>
+                    <ThemedText type='thin'>{timeOrStatus}</ThemedText>
+                </View>
+                <View>
+                    <ThemedText type='small' style={isLast ? { color: colors.inactive } : undefined}>
+                        {address}
+                    </ThemedText>
+                </View>
+            </View>
+        </View>
+    );
 
     return (
         <View style={styles.container}>
-            {/* Usando ID da rota como "Data" ou identificador por enquanto */}
             <ThemedText type="subtitle" style={styles.dateHeader}>
                 {formattedDate}
             </ThemedText>
 
             <View style={styles.card}>
-                {/* Topo do Card */}
-                <View style={[styles.cardHeader, { backgroundColor: cardBackgroundColor }]}>
-                    {/* Placeholder de Preço (Seu backend ainda não envia preço, então deixei fixo ou você pode calcular) */}
+                {/* Header do Card */}
+                <View style={[styles.cardHeader, { backgroundColor: colors.cardBackground }]}>
                     <ThemedText type="title2">Route #{route.id}</ThemedText>
 
                     <View style={styles.metaContainer}>
-                        <View style={styles.metaItem}>
-                            <Ionicons name="cube-outline" size={16} color={iconPrimaryColor} />
-                            <ThemedText type="default">{route.deliveries.length} Stops</ThemedText>
-                        </View>
+                        <Ionicons name="cube-outline" size={16} color={colors.iconPrimary} />
+                        <ThemedText type="default">{route.deliveries.length} Stops</ThemedText>
                     </View>
                 </View>
 
-                {/* Corpo do Card */}
-                <View style={[styles.cardContent, { backgroundColor: cardBackgroundColor }]}>
+                {/* Conteúdo do Card */}
+                <View style={[styles.cardContent, { backgroundColor: colors.cardBackground }]}>
 
-                    {/* Renderiza a primeira entrega (ou ponto de partida simulado) */}
                     {firstDelivery ? (
-                        <View style={styles.destinationInfo}>
-                            <Ionicons name="play-outline" size={20} color={inactiveColor} />
-                            <View style={styles.destinationAddress}>
-                                <View style={styles.destinationTitle}>
-                                    <ThemedText type='thin'>Stop #{firstDelivery.order}</ThemedText>
-                                    <ThemedText type='thin'>{firstDelivery.deliveredAt
-                                        ? format(new Date(firstDelivery.deliveredAt), 'HH:mm')
-                                        : '--:--'}
-                                    </ThemedText>
-                                </View>
-                                <View><ThemedText type='small'>{firstDelivery.dropoffAddress}</ThemedText></View>
-                            </View>
-                        </View>
+                        <DeliveryRow
+                            icon="play-outline"
+                            order={firstDelivery.order}
+                            timeOrStatus={firstDelivery.deliveredAt
+                                ? format(new Date(firstDelivery.deliveredAt), 'HH:mm')
+                                : '--:--'}
+                            address={firstDelivery.dropoffAddress}
+                        />
                     ) : (
                         <ThemedText type='small'>No deliveries assigned.</ThemedText>
                     )}
 
-                    {/* Renderiza a última entrega se houver mais de uma */}
                     {lastDelivery && (
-                        <View style={styles.destinationInfo}>
-                            <Ionicons name="flag-outline" size={20} color={inactiveColor} />
-                            <View style={styles.destinationAddress}>
-                                <View style={styles.destinationTitle}>
-                                    <ThemedText type='thin'>Stop #{lastDelivery.order}</ThemedText>
-                                    <ThemedText type='thin'>{lastDelivery.status}</ThemedText>
-                                </View>
-                                <View><ThemedText type='small' style={{ color: inactiveColor }}>{lastDelivery.dropoffAddress}</ThemedText></View>
-                            </View>
-                        </View>
+                        <DeliveryRow
+                            icon="flag-outline"
+                            order={lastDelivery.order}
+                            timeOrStatus={lastDelivery.deliveredAt
+                                ? format(new Date(lastDelivery.deliveredAt), 'HH:mm')
+                                : '--:--'}
+                            address={lastDelivery.dropoffAddress}
+                            isLast
+                        />
                     )}
 
-                    {/* Mapa Estático */}
                     <Image
                         source={require('@/assets/images/map.png')}
                         style={styles.mapImage}
@@ -158,23 +143,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 8,
+        padding: 12, // Aumentado ligeiramente para melhor toque visual
     },
     metaContainer: {
         flexDirection: 'row',
-        gap: 12,
-        alignItems: 'center',
-    },
-    metaItem: {
-        flexDirection: 'row',
-        gap: 4,
+        gap: 6,
         alignItems: 'center',
     },
     cardContent: {
         width: '100%',
-        padding: 8,
+        padding: 12,
         flexDirection: 'column',
-        gap: 12,
+        gap: 16, // Mais espaçamento entre elementos internos
     },
     destinationInfo: {
         flexDirection: 'row',
@@ -183,15 +163,17 @@ const styles = StyleSheet.create({
     destinationAddress: {
         flexDirection: 'column',
         paddingLeft: 12,
-        width: '90%',
+        flex: 1, // Garante que o texto ocupe o espaço restante corretamente
     },
     destinationTitle: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        marginBottom: 2,
     },
     mapImage: {
         width: '100%',
         height: 150,
         borderRadius: 12,
+        marginTop: 4,
     }
 });
