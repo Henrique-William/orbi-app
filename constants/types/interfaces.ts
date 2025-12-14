@@ -5,6 +5,9 @@ export interface Delivery {
   dropoffAddress: string;
   pickUpDateTime?: string;
   deliveredAt?: string;
+  recipientName?: string;
+  recipientPhone?: string;
+  packageDetails?: string;
 }
 
 export interface RouteData {

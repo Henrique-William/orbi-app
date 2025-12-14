@@ -12,7 +12,8 @@ const BASE_URL = Platform.select({
 
 export const API_URLS = {
   ROUTES: `${BASE_URL}/route`,
-  // Adicione outros endpoints aqui...
+  ROUTE_BY_ID: (id: number) => `${BASE_URL}/route/${id}`,
+  
 };
 
 export async function fetchRoutes() {
@@ -24,6 +25,21 @@ export async function fetchRoutes() {
     return await response.json();
   } catch (error) {
     console.error('API Error (fetchRoutes):', error);
+    throw error;
+  }
+}
+
+export async function fetchRouteDetails(id: number) {
+  try {
+    const url = API_URLS.ROUTE_BY_ID(id);
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (fetchRouteDetails):', error);
     throw error;
   }
 }

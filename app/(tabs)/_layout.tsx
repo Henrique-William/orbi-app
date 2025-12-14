@@ -35,7 +35,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
 
           let iconName: any = 'home-outline';
           if (route.name === 'index') iconName = isFocused ? 'home' : 'home-outline';
-          else if (route.name === 'routes') iconName = isFocused ? 'analytics' : 'analytics-outline';
+          else if (route.name === 'rides') iconName = isFocused ? 'analytics' : 'analytics-outline';
           else if (route.name === 'statistics') iconName = isFocused ? 'stats-chart' : 'stats-chart-outline';
           else if (route.name === 'notifications') iconName = isFocused ? 'notifications' : 'notifications-outline';
 
@@ -70,7 +70,7 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="routes" options={{ title: 'Routes' }} />
+      <Tabs.Screen name="rides" options={{ title: 'Rides' }} />
       <Tabs.Screen name="statistics" options={{ title: 'Statistics' }} />
       <Tabs.Screen name="notifications" options={{ title: 'Notifications' }} />
     </Tabs>

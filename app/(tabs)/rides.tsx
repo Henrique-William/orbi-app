@@ -47,7 +47,7 @@ export default function RoutesScreen() {
     if (loading && !refreshing) {
       return (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" />
+          <ActivityIndicator size="small" />
         </View>
       );
     }
@@ -55,7 +55,7 @@ export default function RoutesScreen() {
     if (error) {
       return (
         <View style={styles.centerContainer}>
-          <ThemedText style={{ color: 'red' }}>{error}</ThemedText>
+          <ThemedText style={{ color: 'white' }}>{error}</ThemedText>
         </View>
       );
     }
