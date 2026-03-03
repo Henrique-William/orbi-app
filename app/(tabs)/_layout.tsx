@@ -9,7 +9,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   const insets = useSafeAreaInsets();
   const theme = useColorScheme() ?? 'light';
   
-  const activeColor = Colors[theme].tabIconSelected;
+  const activeColor = Colors[theme].primary;
   const inactiveColor = Colors[theme].tabIconDefault;
   const backgroundColor = Colors[theme].background;
 
@@ -50,7 +50,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
                 name={iconName}
                 size={24}
 
-                color={isFocused ? Colors.dark.tint : Colors.dark.tabIconDefault} 
+                color={isFocused ? Colors[theme].primary : Colors[theme].tabIconDefault} 
               />
             </TouchableOpacity>
           );

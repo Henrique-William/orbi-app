@@ -47,7 +47,7 @@ export default function RoutesScreen() {
     if (loading && !refreshing) {
       return (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="small" />
+          <ActivityIndicator size="large" />
         </View>
       );
     }
@@ -89,7 +89,7 @@ export default function RoutesScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          <ThemedText type='title' style={styles.title}>My rides</ThemedText>
+          <ThemedText type='titleBold' style={styles.title}>My rides</ThemedText>
           
           {renderContent()}
 
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100, // Espaço extra para o TabBar não cobrir o último item
+    paddingBottom: 100,
     minHeight: '100%',
   },
   centerContainer: {

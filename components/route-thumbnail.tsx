@@ -8,7 +8,6 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ThemedText } from './themed-text';
 
-// Importe os tipos centralizados (ajuste o caminho conforme onde criou o arquivo)
 import { RouteData } from '@/constants/types/interfaces';
 import { Link } from 'expo-router';
 
@@ -21,8 +20,8 @@ export default function RouteThumbnail({ route }: RouteThumbnailProps) {
 
     const colors = {
         cardBackground: theme === 'light' ? '#F4F4F5' : '#27272a',
-        iconPrimary: Colors[theme].tint,
-        inactive: Colors[theme].inactive,
+        iconPrimary: Colors[theme].primary,
+        inactive: Colors[theme].gray,
         textSecondary: Colors[theme].icon,
     };
 
@@ -78,7 +77,7 @@ export default function RouteThumbnail({ route }: RouteThumbnailProps) {
                     <View style={styles.card}>
                         {/* Header do Card */}
                         <View style={[styles.cardHeader, { backgroundColor: colors.cardBackground }]}>
-                            <ThemedText type="title2">Route #{route.id}</ThemedText>
+                            <ThemedText type="subtitle">Route #{route.id}</ThemedText>
 
                             <View style={styles.metaContainer}>
                                 <Ionicons name="cube-outline" size={16} color={colors.iconPrimary} />
@@ -146,7 +145,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 12, // Aumentado ligeiramente para melhor toque visual
+        padding: 12,
     },
     metaContainer: {
         flexDirection: 'row',
@@ -157,7 +156,7 @@ const styles = StyleSheet.create({
         width: '100%',
         padding: 12,
         flexDirection: 'column',
-        gap: 16, // Mais espaçamento entre elementos internos
+        gap: 16,
     },
     destinationInfo: {
         flexDirection: 'row',
@@ -166,7 +165,7 @@ const styles = StyleSheet.create({
     destinationAddress: {
         flexDirection: 'column',
         paddingLeft: 12,
-        flex: 1, // Garante que o texto ocupe o espaço restante corretamente
+        flex: 1, 
     },
     destinationTitle: {
         flexDirection: 'row',
