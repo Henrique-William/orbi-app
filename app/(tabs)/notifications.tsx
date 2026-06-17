@@ -8,7 +8,7 @@ export default function Notifications() {
 return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.content}>
-        <ThemedText type='title'>Notifications</ThemedText>
+        <ThemedText type='titleBold'>Notifications</ThemedText>
       </SafeAreaView>
     </ThemedView>
   );

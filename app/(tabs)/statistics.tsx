@@ -8,7 +8,7 @@ export default function Statistics() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.content}>
-        <ThemedText type='title'>Statistic</ThemedText>
+        <ThemedText type='titleBold'>Statistic</ThemedText>
       </SafeAreaView>
     </ThemedView>
   );

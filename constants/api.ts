@@ -13,7 +13,10 @@ const BASE_URL = Platform.select({
 export const API_URLS = {
   ROUTES: `${BASE_URL}/route`,
   ROUTE_BY_ID: (id: number) => `${BASE_URL}/route/${id}`,
-  
+  LOGIN: `${BASE_URL}/auth/login`,
+  REGISTER: `${BASE_URL}/auth/register`,
+  VALIDATE: `${BASE_URL}/auth/validate`,
+  OPTIMIZE_ROUTE: `${BASE_URL}/route/optimize`
 };
 
 export async function fetchRoutes() {

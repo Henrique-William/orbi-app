@@ -9,7 +9,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   const insets = useSafeAreaInsets();
   const theme = useColorScheme() ?? 'light';
   
-  const activeColor = Colors[theme].tabIconSelected;
+  const activeColor = Colors[theme].primary;
   const inactiveColor = Colors[theme].tabIconDefault;
   const backgroundColor = Colors[theme].background;
 
@@ -50,7 +50,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
                 name={iconName}
                 size={24}
 
-                color={isFocused ? Colors.dark.tint : Colors.dark.tabIconDefault} 
+                color={isFocused ? Colors[theme].primary : Colors[theme].tabIconDefault} 
               />
             </TouchableOpacity>
           );
@@ -60,7 +60,40 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   );
 };
 
+import { API_URLS } from '@/constants/api';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react'; // will be fixed in text
+import { ActivityIndicator } from 'react-native';
+
 export default function TabLayout() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch(API_URLS.VALIDATE, {
+      method: 'GET',
+      credentials: 'include',
+    })
+      .then((res) => {
+        if (res.ok) setIsAuthenticated(true);
+        else throw new Error('Não autenticado');
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+        router.replace('/login');
+      });
+  }, []);
+
+  if (isAuthenticated === null) {
+    return (
+      <View style={[ styles.container, { flex: 1, justifyContent: 'center', backgroundColor: '#f8f8f8' } ]}>
+        <ActivityIndicator size="large" color="#450693" />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) return null;
+
   return (
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}

@@ -11,11 +11,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import RouteThumbnail from '@/components/route-thumbnail';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { useRouter } from 'expo-router';
+import { TouchableOpacity } from 'react-native';
 import { fetchRoutes } from '@/constants/api';
 import { RouteData } from '@/constants/types/interfaces';
 
 
 export default function RoutesScreen() {
+  const router = useRouter();
   const [routes, setRoutes] = useState<RouteData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -47,7 +50,7 @@ export default function RoutesScreen() {
     if (loading && !refreshing) {
       return (
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="small" />
+          <ActivityIndicator size="large" />
         </View>
       );
     }
@@ -89,7 +92,7 @@ export default function RoutesScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          <ThemedText type='title' style={styles.title}>My rides</ThemedText>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 20}}><ThemedText type='titleBold'>My rides</ThemedText><TouchableOpacity style={{backgroundColor: '#450693', padding: 8, borderRadius: 8}} onPress={() => router.push('/create-route')}><ThemedText style={{color: 'white', fontWeight: 'bold', fontSize: 12}}>+ Criar Rota</ThemedText></TouchableOpacity></View>
           
           {renderContent()}
 
@@ -108,7 +111,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100, // Espaço extra para o TabBar não cobrir o último item
+    paddingBottom: 100,
     minHeight: '100%',
   },
   centerContainer: {

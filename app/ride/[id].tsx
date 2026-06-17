@@ -4,6 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router'; // Adicione useRouter
 import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -65,33 +66,37 @@ export default function RideDetailsScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <Stack.Screen options={{
-        title: `Route #${route.id}`,
-        headerBackTitle: 'Back', 
-        headerShown: false
-      }} />
+      <SafeAreaView edges={['top']}>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Stack.Screen options={{
+          title: `Route #${route.id}`,
+          headerBackTitle: 'Back',
+          headerShown: false
+        }} />
 
-        <View style={styles.headerSection}>
-          <Link href="../rides" asChild>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons name="arrow-back-outline" size={24} color={Colors[theme].text} />
-            </TouchableOpacity>
-          </Link>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
 
-          <ThemedText type="thin" style={{ opacity: 0.7 }}>
-            {formattedDate}
-          </ThemedText>
+          <View style={styles.headerSection}>
+            <Link href="../rides" asChild>
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="arrow-back-outline" size={24} color={Colors[theme].text} />
+              </TouchableOpacity>
+            </Link>
 
-          <Ionicons name="document-text" size={32} color={Colors[theme].text} />
-        </View>
+            <ThemedText type="thin" style={{ opacity: 0.7 }}>
+              {formattedDate}
+            </ThemedText>
 
-        <View style={{ marginTop: 20 }}>
-          <ThemedText type="title">Route #{route.id}</ThemedText>
-        </View>
+            <Ionicons name="document-text" size={32} color={Colors[theme].text} />
+          </View>
 
-      </ScrollView>
+          <View style={{ marginTop: 20 }}>
+            <ThemedText type="titleBold">Route #{route.id}</ThemedText>
+          </View>
+
+        </ScrollView>
+
+      </SafeAreaView>
     </ThemedView>
   );
 }
