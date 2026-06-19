@@ -1,8 +1,6 @@
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
-
-
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
   darkColor?: string;
@@ -58,9 +56,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_600SemiBold',
   },
   titleBold: {
-    fontSize: 32,
-    lineHeight: 40,
-    fontFamily: 'Poppins_700Bold',
+    fontSize: 28,
+    lineHeight: 34,
+    fontFamily: 'Poppins_600SemiBold',
   },
   title: {
     fontSize: 32,
@@ -76,5 +74,5 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     fontSize: 18,
     fontFamily: 'Poppins_400Regular',
-  },
+  }  
 });

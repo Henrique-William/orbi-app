@@ -1,21 +1,24 @@
-import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Image,
+  FlatList,
   ScrollView,
   StyleSheet,
+  TextInput,
+  TouchableOpacity,
   useColorScheme,
   View
 } from 'react-native';
+import MapView from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import RouteThumbnail2 from '@/components/route-thumbnail2';
+import RouteThumbnailHome from '@/components/route-thumbnail-home';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { fetchRoutes } from '@/constants/api';
-import { Colors } from '@/constants/theme';
+import mapStyle from '@/constants/map/mapStyle.json';
 import { RouteData } from '@/constants/types/interfaces';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 export default function HomeScreen() {
   const theme = useColorScheme() ?? 'light';
@@ -23,6 +26,8 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [isLocationReady, setIsLocationReady] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -40,6 +45,20 @@ export default function HomeScreen() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setIsLocationReady(true); // Permissão negada, usa o padrão mesmo
+        return;
+      }
+
+      let loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc);
+      setIsLocationReady(true); // Agora temos a real localização
+    })();
+  }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -75,47 +94,80 @@ export default function HomeScreen() {
     }
 
     return routes.map((routeItem) => (
-      <RouteThumbnail2
+      <RouteThumbnailHome
         key={routeItem.id}
         route={routeItem}
       />
     ));
   };
 
+  const [search, setSearch] = useState('');
+
+  const filterOptions = ['All', 'Parking', 'Vehicle', 'Motorbike', 'Bicycle', 'Bus'];
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.content}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={[styles.money, { backgroundColor: Colors[theme].backgroundCard }]}>
-            <Image source={require('@/assets/images/money.png')} style={{ width: 32, height: 32 }} />
-            <ThemedText type='subtitle'>320.47</ThemedText>
+          <ThemedText type='titleBold' style={styles.title}>Começe Otmizando Sua Nova Rota</ThemedText>
+
+          <View style={styles.searchBarContainer}>
+            <TextInput
+              style={styles.searchBar}
+              placeholder="Digite o nome de uma cidade..."
+              value={search}
+              onChangeText={(text) => setSearch(text)}
+            />
+            <TouchableOpacity style={styles.searchButton}>
+              <Ionicons name="locate-outline" size={28} color="white" />
+            </TouchableOpacity>
           </View>
 
-          <View style={{ display: 'flex', flexDirection: 'row', gap: 16 }}>
-            <Ionicons style={{ backgroundColor: Colors[theme].backgroundCard, borderRadius: 999, padding: 12 }}
-              name="search-outline" size={24} color={Colors[theme].icon} />
-            <Ionicons style={{ backgroundColor: Colors[theme].backgroundCard, borderRadius: 999, padding: 12 }}
-              name="notifications-outline" size={24} color={Colors[theme].icon} />
-          </View>
+          <FlatList
+            horizontal={true}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 4, paddingHorizontal: 8 }} // Adicione padding se necessário
+            style={styles.filterSection} // Garanta que este estilo não tenha altura fixa que conflite
+            data={filterOptions}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.filters}>
+                <ThemedText type='thin' style={{ color: 'white' }}>
+                  {item}
+                </ThemedText>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item}
+          />
+
+          {/* <View style={{styles.}}></View> */}
+
         </View>
 
-        <ThemedText type='title' style={styles.title}>Travel Made Effortless</ThemedText>
 
-        {/* Vehicles */}
-        <View style={{ display: 'flex', flexDirection: 'row', gap: 4, width: '100%' }}>
-          <View style={[styles.vehicleCards, { backgroundColor: "#CEEDF0" }]}><ThemedText type='thin'>Trains</ThemedText></View>
-          <View style={[styles.vehicleCards, { backgroundColor: "#D7E1FB" }]}><ThemedText type='thin'>Flights</ThemedText></View>
-          <View style={[styles.vehicleCards, { backgroundColor: "#D3D1FB" }]}><ThemedText type='thin'>Boats</ThemedText></View>
-          <View style={[styles.vehicleCards, { backgroundColor: "#F6CFC4" }]}><ThemedText type='thin'>Bus</ThemedText></View>
-        </View>
+        {/* Map container */}
+        <View style={styles.mapContainer}>
+          {isLocationReady && (
+            <MapView
+              style={styles.map}
+              customMapStyle={mapStyle}
+              initialRegion={{
+                latitude: location?.coords.latitude ?? -22.8250,
+                longitude: location?.coords.longitude ?? -47.2650,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }}
+            />
+          )}
 
-        <View style={styles.upcomingSchedules}>
-          {/* Upcoming Schedules Title */}
-          <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-            <ThemedText type='subtitle' style={{ marginBottom: 8 }}>Upcoming Schedules</ThemedText>
-            <Link href="/rides"><ThemedText type='link' style={{ color: Colors[theme].primary }}>View All</ThemedText></Link>
-          </View>
+          {/* <LinearGradient
+            colors={['transparent', '#F4F5FC']}
+            style={styles.gradientOverlay}
+          /> */}
+          {/* <LinearGradient
+            colors={['#F4F5FC', 'transparent']}
+            style={styles.gradientOverlay}
+          /> */}
 
           <ScrollView
             horizontal={true}
@@ -126,6 +178,7 @@ export default function HomeScreen() {
           </ScrollView>
 
         </View>
+
       </SafeAreaView>
     </ThemedView>
   );
@@ -144,61 +197,93 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
   header: {
     width: '100%',
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  money: {
-    width: 'auto',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    textAlign: 'center',
+    paddingHorizontal: 16
   },
   title: {
     display: 'flex',
-    width: '60%',
+    textAlign: 'center',
     marginVertical: 32,
   },
-  vehicleCards: {
-    aspectRatio: 7 / 6,
-    width: '24%',
-    height: 'auto',
-    borderRadius: 16,
+  searchBarContainer: {
+    width: '100%',
     display: 'flex',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    padding: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    gap: 16,
+  },
+  searchBar: {
+    flex: 1,
+    height: 60,
+    borderRadius: 32,
+    paddingHorizontal: 20,
+    backgroundColor: '#fff',
+  },
+  searchButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 60,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterSection: {
+    marginTop: 24,
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'row',
+    position: 'absolute',
+    top: '100%',
+    zIndex: 1,
+  },
+  filters: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 32,
+    backgroundColor: '#000',
+  },
+  mapContainer: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    height: '55%',
+    marginTop: 48,
+  },
+  map: {
+    width: '100%',
+    height: '100%'
   },
   upcomingSchedules: {
     width: '100%',
     height: 300,
     marginTop: 20,
   },
+  gradientOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%',
+  },
   scheduleContent: {
     width: '100%',
     maxHeight: '100%',
     paddingVertical: 8,
-  },
-  scheduleContainer: {
-    aspectRatio: 5 / 4,
-    width: "70%",
-    height: 70,
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 8,
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+    position: 'absolute',
+    zIndex: 1,
+    top: '55%',
+    left: 16,
+    marginRight: 16,
+  }
 });
