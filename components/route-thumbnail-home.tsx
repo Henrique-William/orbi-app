@@ -36,7 +36,7 @@ export default function RouteThumbnailHome({ route }: RouteThumbnailProps) {
 const styles = StyleSheet.create({
   scheduleContainer: {
     width: 180,
-    aspectRatio: 5 / 6,
+    aspectRatio: 9 / 10,
     height: 'auto',
     borderRadius: 40,
     marginRight: 8,
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   cardInfo: {
     width: '100%',
-    height: '60%',
+    height: '50%',
     display: 'flex',
     flexDirection: 'column',
     backgroundColor: '#fff',
