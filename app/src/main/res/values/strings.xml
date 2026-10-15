@@ -1,0 +1,53 @@
+<resources>
+    <string name="app_name">Orbi App</string>
+    
+    <!-- Login -->
+    <string name="login_title">Bem-vindo ao Orbi</string>
+    <string name="login_subtitle">Faça login para acessar suas rotas e entregas</string>
+    <string name="email_hint">E-mail ou Matrícula</string>
+    <string name="password_hint">Senha</string>
+    <string name="btn_login">Entrar</string>
+    <string name="login_empty_error">Preencha o e-mail e a senha</string>
+    <string name="login_invalid_credentials">E-mail ou senha inválidos</string>
+    
+    <!-- Home / Rotas -->
+    <string name="home_greeting">Olá, Motorista</string>
+    <string name="home_subtitle">Suas rotas de entrega atribuídas</string>
+    <string name="filter_all">Todas</string>
+    <string name="filter_pending">A fazer</string>
+    <string name="filter_delayed">Atrasado</string>
+    <string name="filter_in_progress">Em andamento</string>
+    <string name="filter_completed">Concluídas</string>
+    <string name="empty_routes_title">Nenhuma rota encontrada</string>
+    <string name="empty_routes_message">Não há rotas disponíveis para o filtro selecionado.</string>
+    <string name="btn_logout">Sair</string>
+    
+    <!-- Detalhes da Rota -->
+    <string name="route_details_title">Detalhes da Rota</string>
+    <string name="stops_title">Ordem de Entrega</string>
+    <string name="btn_start_route">Iniciar Rota</string>
+    <string name="btn_complete_route">Concluir Rota</string>
+    <string name="route_completed_toast">Rota concluída com sucesso!</string>
+    
+    <!-- Mapa de Navegação -->
+    <string name="navigation_title">Navegação em Tempo Real</string>
+    <string name="next_stop_label">Próxima Parada</string>
+    <string name="btn_complete_stop">Concluir</string>
+    <string name="btn_skip_stop">Pular</string>
+    <string name="btn_cancel_stop">Cancelar</string>
+    <string name="dialog_skip_title">Pular este endereço?</string>
+    <string name="dialog_skip_subtitle">Selecione o motivo para pular a parada:</string>
+    <string name="dialog_cancel_title">Cancelar este endereço?</string>
+    <string name="dialog_cancel_subtitle">Selecione o motivo de cancelamento da entrega:</string>
+    <string name="reason_recipient_absent">Destinatário Ausente</string>
+    <string name="reason_blocked_road">Via Bloqueada / Obras</string>
+    <string name="reason_business_closed">Estabelecimento Fechado</string>
+    <string name="reason_address_not_found">Endereço Inexistente / Incorreto</string>
+    <string name="reason_customer_cancelled">Cancelado pelo Cliente</string>
+    <string name="reason_damaged_cargo">Carga Avariada / Danificada</string>
+    <string name="reason_other">Outro Motivo</string>
+    <string name="btn_confirm">Confirmar</string>
+    <string name="btn_dismiss">Voltar</string>
+    <string name="all_stops_handled_title">Todas as paradas tratadas!</string>
+    <string name="all_stops_handled_message">Todas as entregas desta rota foram concluídas, puladas ou canceladas. Deseja finalizar a rota agora?</string>
+</resources>

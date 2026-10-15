@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta Principal Orbi (Minimalista 60/30/10) -->
+    <color name="primary">#2563EB</color>
+    <color name="primary_dark">#1D4ED8</color>
+    <color name="primary_container">#EFF6FF</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <!-- Superfícies Neutras e Fundos (60%) -->
+    <color name="background_light">#F8FAFC</color>
+    <color name="surface_white">#FFFFFF</color>
+    <color name="card_stroke">#E2E8F0</color>
+    <color name="divider">#F1F5F9</color>
+
+    <!-- Textos e Elementos Estruturais (30%) -->
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#475569</color>
+    <color name="text_hint">#94A3B8</color>
+
+    <!-- Status de Rotas e Entregas (Pills Suaves) -->
+    <color name="status_pending">#475569</color>
+    <color name="status_pending_bg">#F1F5F9</color>
+    
+    <color name="status_delayed">#DC2626</color>
+    <color name="status_delayed_bg">#FEF2F2</color>
+    
+    <color name="status_in_progress">#2563EB</color>
+    <color name="status_in_progress_bg">#EFF6FF</color>
+    
+    <color name="status_completed">#059669</color>
+    <color name="status_completed_bg">#ECFDF5</color>
+    
+    <color name="status_skipped">#D97706</color>
+    <color name="status_skipped_bg">#FFFBEB</color>
+    
+    <color name="status_cancelled">#DC2626</color>
+    <color name="status_cancelled_bg">#FEF2F2</color>
+
+    <!-- Cores do Mapa e Navegação -->
+    <color name="map_road">#E2E8F0</color>
+    <color name="map_road_border">#CBD5E1</color>
+    <color name="map_background">#F1F5F9</color>
+    <color name="map_building">#E2E8F0</color>
+    <color name="map_green_area">#D1FAE5</color>
+    <color name="route_polyline">#2563EB</color>
+    <color name="route_polyline_glow">#332563EB</color>
+    <color name="driver_pin">#2563EB</color>
+    <color name="driver_pin_pulse">#262563EB</color>
+    <color name="destination_pin">#EF4444</color>
+
+    <!-- Padrões -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>
