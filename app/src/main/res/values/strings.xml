@@ -110,7 +110,6 @@
     <string name="cd_call_recipient">Ligar para %1$s</string>
 
     <!-- Mapa de Navegação -->
-    <string name="google_maps_key" translatable="false">AIzaSyBK0UgOnik71SQcy_IlGKL0ZIojxl3Avn4</string>
     <string name="navigation_title">Navegação</string>
     <string name="next_stop_label">Próxima parada</string>
     <string name="nav_heading_to">Indo para a parada %1$d</string>
