@@ -1,28 +1,33 @@
 package com.orbi.orbi_app.ui.login;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.EditText;
+import android.view.inputmethod.EditorInfo;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
+import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.orbi.orbi_app.R;
 import com.orbi.orbi_app.data.SessionManager;
 import com.orbi.orbi_app.data.remote.ApiClient;
 import com.orbi.orbi_app.data.remote.OrbiApiService;
 import com.orbi.orbi_app.data.remote.dto.LoginRequestDto;
 import com.orbi.orbi_app.data.remote.dto.LoginResponseDto;
+import com.orbi.orbi_app.ui.common.InsetsUtils;
 import com.orbi.orbi_app.ui.home.HomeActivity;
 
 import retrofit2.Call;
@@ -31,8 +36,14 @@ import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final String SERVER_CLOUD = "https://orbi-api-em6s.onrender.com/";
+    private static final String SERVER_LOCAL = "http://localhost:8080/";
+    private static final String DEMO_EMAIL = "carlos.silva@exemplo.com";
+
     private View rootLayout;
     private Chip chipServerUrl;
+    private TextInputLayout tilEmail;
+    private TextInputLayout tilPassword;
     private TextInputEditText etEmail;
     private TextInputEditText etPassword;
     private MaterialButton btnLogin;
@@ -42,6 +53,7 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
 
         sessionManager = new SessionManager(this);
@@ -55,82 +67,117 @@ public class LoginActivity extends AppCompatActivity {
 
         rootLayout = findViewById(R.id.rootLayout);
         chipServerUrl = findViewById(R.id.chipServerUrl);
+        tilEmail = findViewById(R.id.tilEmail);
+        tilPassword = findViewById(R.id.tilPassword);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
         btnOfflineMode = findViewById(R.id.btnOfflineMode);
         progressBarLogin = findViewById(R.id.progressBarLogin);
 
-        // Ajuste contra sobreposição da barra de status do Android
-        ViewCompat.setOnApplyWindowInsetsListener(rootLayout, (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
+        // Edge-to-edge: respeita barras do sistema e o teclado
+        InsetsUtils.applyPadding(rootLayout, InsetsUtils.ALL, true);
 
+        setupVersionLabel();
         updateServerChipText();
         chipServerUrl.setOnClickListener(v -> showServerConfigDialog());
 
         btnLogin.setOnClickListener(v -> performLogin());
-        btnOfflineMode.setOnClickListener(v -> {
-            String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "carlos.silva@exemplo.com";
-            handleOfflineFallback(email);
+        btnOfflineMode.setOnClickListener(v -> handleOfflineFallback(textOf(etEmail)));
+
+        etPassword.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                performLogin();
+                return true;
+            }
+            return false;
         });
+
+        clearErrorOnTyping(etEmail, tilEmail);
+        clearErrorOnTyping(etPassword, tilPassword);
+    }
+
+    private void setupVersionLabel() {
+        try {
+            String version = getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+            ((android.widget.TextView) findViewById(R.id.tvVersion))
+                    .setText(getString(R.string.version_label, version));
+        } catch (PackageManager.NameNotFoundException ignored) {
+            findViewById(R.id.tvVersion).setVisibility(View.GONE);
+        }
     }
 
     private void updateServerChipText() {
-        String url = sessionManager.getServerUrl().replace("http://", "").replace("/", "");
-        chipServerUrl.setText("API: " + url);
+        String host = sessionManager.getServerUrl()
+                .replace("https://", "")
+                .replace("http://", "")
+                .replaceAll("/+$", "");
+        chipServerUrl.setText(getString(R.string.server_chip, host));
+        chipServerUrl.setContentDescription(getString(R.string.cd_server_chip, host));
     }
 
     private void showServerConfigDialog() {
-        String[] options = {"Emulador (https://orbi-api-em6s.onrender.com/)", "Localhost (http://localhost:8080/)", "IP Customizado"};
+        String[] options = {
+                getString(R.string.server_option_cloud),
+                getString(R.string.server_option_localhost),
+                getString(R.string.server_option_custom)
+        };
 
-        new AlertDialog.Builder(this)
-                .setTitle("Configurar Endereço da Orbi API")
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.server_dialog_title)
+                .setIcon(R.drawable.ic_dns)
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
-                        ApiClient.setBaseUrl("https://orbi-api-em6s.onrender.com/", this);
-                        updateServerChipText();
-                        Toast.makeText(this, "Servidor definido: https://orbi-api-em6s.onrender.com", Toast.LENGTH_SHORT).show();
+                        applyServer(SERVER_CLOUD);
                     } else if (which == 1) {
-                        ApiClient.setBaseUrl("http://localhost:8080/", this);
-                        updateServerChipText();
-                        Toast.makeText(this, "Servidor definido: localhost:8080", Toast.LENGTH_SHORT).show();
+                        applyServer(SERVER_LOCAL);
                     } else {
                         showCustomUrlPrompt();
                     }
                 })
-                .setNegativeButton("Fechar", null)
+                .setNegativeButton(R.string.btn_close, null)
                 .show();
     }
 
     private void showCustomUrlPrompt() {
-        final EditText input = new EditText(this);
+        View content = LayoutInflater.from(this).inflate(R.layout.dialog_server_url, null);
+        TextInputEditText input = content.findViewById(R.id.etServerUrl);
         input.setText(sessionManager.getServerUrl());
-        input.setHint("http://192.168.1.X:8080/");
 
-        new AlertDialog.Builder(this)
-                .setTitle("Digitar URL da Orbi API")
-                .setView(input)
-                .setPositiveButton("Salvar", (dialog, which) -> {
-                    String customUrl = input.getText().toString().trim();
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.server_custom_title)
+                .setView(content)
+                .setPositiveButton(R.string.btn_save, (dialog, which) -> {
+                    String customUrl = textOf(input);
                     if (!TextUtils.isEmpty(customUrl)) {
-                        ApiClient.setBaseUrl(customUrl, this);
-                        updateServerChipText();
-                        Toast.makeText(this, "Nova URL salva!", Toast.LENGTH_SHORT).show();
+                        applyServer(customUrl);
                     }
                 })
-                .setNegativeButton("Cancelar", null)
+                .setNegativeButton(R.string.btn_cancel, null)
                 .show();
     }
 
-    private void performLogin() {
-        String email = etEmail.getText() != null ? etEmail.getText().toString().trim() : "";
-        String password = etPassword.getText() != null ? etPassword.getText().toString().trim() : "";
+    private void applyServer(String url) {
+        ApiClient.setBaseUrl(url, this);
+        updateServerChipText();
+        Snackbar.make(rootLayout, getString(R.string.server_saved, url), Snackbar.LENGTH_SHORT).show();
+    }
 
-        if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-            Toast.makeText(this, R.string.login_empty_error, Toast.LENGTH_SHORT).show();
+    private void performLogin() {
+        String email = textOf(etEmail);
+        String password = textOf(etPassword);
+
+        boolean valid = true;
+        if (TextUtils.isEmpty(email)) {
+            tilEmail.setError(getString(R.string.login_email_required));
+            valid = false;
+        }
+        if (TextUtils.isEmpty(password)) {
+            tilPassword.setError(getString(R.string.login_password_required));
+            valid = false;
+        }
+        if (!valid) {
+            (TextUtils.isEmpty(email) ? etEmail : etPassword).requestFocus();
             return;
         }
 
@@ -146,53 +193,75 @@ public class LoginActivity extends AppCompatActivity {
                     String token = response.body().getAccessToken();
                     String driverName = email.split("@")[0];
                     sessionManager.saveSession(email, token, driverName);
-                    Toast.makeText(LoginActivity.this, "Conectado à Orbi API com sucesso!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(LoginActivity.this, R.string.login_success, Toast.LENGTH_SHORT).show();
                     navigateToHome();
                 } else if (response.code() == 401) {
-                    Toast.makeText(LoginActivity.this, "Credenciais inválidas na Orbi API (HTTP 401)", Toast.LENGTH_LONG).show();
+                    tilPassword.setError(getString(R.string.login_invalid_credentials));
+                    etPassword.requestFocus();
                 } else {
-                    Toast.makeText(LoginActivity.this, "Erro Orbi API (HTTP " + response.code() + "): " + response.message(), Toast.LENGTH_LONG).show();
+                    Snackbar.make(rootLayout, getString(R.string.login_http_error, response.code()),
+                            Snackbar.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<LoginResponseDto> call, Throwable t) {
                 setLoading(false);
-                String currentUrl = sessionManager.getServerUrl();
-                new AlertDialog.Builder(LoginActivity.this)
-                        .setTitle("Falha ao Conectar à Orbi API")
-                        .setMessage("Não foi possível alcançar o servidor em:\n" + currentUrl + "\n\nDetalhes: " + t.getMessage() + "\n\nVerifique se o backend Spring Boot está em execução ou teste no Modo Offline.")
-                        .setPositiveButton("Modo Offline", (d, w) -> handleOfflineFallback(email))
-                        .setNegativeButton("Trocar Servidor", (d, w) -> showServerConfigDialog())
-                        .setNeutralButton("OK", null)
+                new MaterialAlertDialogBuilder(LoginActivity.this)
+                        .setIcon(R.drawable.ic_cloud_off)
+                        .setTitle(R.string.login_connection_failed_title)
+                        .setMessage(getString(R.string.login_connection_failed_message, sessionManager.getServerUrl()))
+                        .setPositiveButton(R.string.btn_demo, (d, w) -> handleOfflineFallback(email))
+                        .setNegativeButton(R.string.btn_change_server, (d, w) -> showServerConfigDialog())
+                        .setNeutralButton(R.string.btn_close, null)
                         .show();
             }
         });
     }
 
     private void handleOfflineFallback(String email) {
+        if (TextUtils.isEmpty(email)) email = DEMO_EMAIL;
         String fallbackToken = "offline_jwt_token_" + System.currentTimeMillis();
-        String driverName = "Carlos Silva (Motorista)";
-        sessionManager.saveSession(email, fallbackToken, driverName);
-        Toast.makeText(this, "Acessando em Modo Offline / Demonstração", Toast.LENGTH_SHORT).show();
+        String driverName = "Carlos Silva";
+        sessionManager.saveSession(email, fallbackToken, driverName, "driver_1");
+        Toast.makeText(this, R.string.login_offline_toast, Toast.LENGTH_SHORT).show();
         navigateToHome();
     }
 
     private void setLoading(boolean isLoading) {
-        if (isLoading) {
-            btnLogin.setText("");
-            btnLogin.setEnabled(false);
-            progressBarLogin.setVisibility(View.VISIBLE);
-        } else {
-            btnLogin.setText(R.string.btn_login);
-            btnLogin.setEnabled(true);
-            progressBarLogin.setVisibility(View.GONE);
-        }
+        btnLogin.setEnabled(!isLoading);
+        btnOfflineMode.setEnabled(!isLoading);
+        tilEmail.setEnabled(!isLoading);
+        tilPassword.setEnabled(!isLoading);
+        btnLogin.setText(isLoading ? "" : getString(R.string.btn_login));
+        btnLogin.setContentDescription(isLoading ? getString(R.string.login_loading) : null);
+        progressBarLogin.setVisibility(isLoading ? View.VISIBLE : View.GONE);
     }
 
     private void navigateToHome() {
         Intent intent = new Intent(this, HomeActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    private static String textOf(TextInputEditText field) {
+        return field.getText() != null ? field.getText().toString().trim() : "";
+    }
+
+    private static void clearErrorOnTyping(TextInputEditText field, TextInputLayout layout) {
+        field.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (layout.getError() != null) layout.setError(null);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
     }
 }

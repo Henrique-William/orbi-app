@@ -1,53 +1,175 @@
 <resources>
-    <string name="app_name">Orbi App</string>
-    
+    <string name="app_name">Orbi</string>
+
+    <!-- Comum -->
+    <string name="cd_back">Voltar</string>
+    <string name="cd_close">Fechar</string>
+    <string name="btn_cancel">Cancelar</string>
+    <string name="btn_save">Salvar</string>
+    <string name="btn_close">Fechar</string>
+    <string name="btn_ok">OK</string>
+    <string name="btn_retry">Tentar novamente</string>
+
+    <!-- Status -->
+    <string name="status_route_pending">Pendente</string>
+    <string name="status_route_assigned">Atribuída</string>
+    <string name="status_route_delayed">Atrasada</string>
+    <string name="status_route_in_progress">Em andamento</string>
+    <string name="status_route_completed">Concluída</string>
+    <string name="status_route_cancelled">Cancelada</string>
+    <string name="status_wp_pending">Pendente</string>
+    <string name="status_wp_at_pickup">No ponto de coleta</string>
+    <string name="status_wp_in_transit">Em trânsito</string>
+    <string name="status_wp_completed">Entregue</string>
+    <string name="status_wp_skipped">Pulada</string>
+    <string name="status_wp_cancelled">Cancelada</string>
+
     <!-- Login -->
-    <string name="login_title">Bem-vindo ao Orbi</string>
-    <string name="login_subtitle">Faça login para acessar suas rotas e entregas</string>
-    <string name="email_hint">E-mail ou Matrícula</string>
+    <string name="login_title">Bem-vindo de volta</string>
+    <string name="login_subtitle">Entre para acessar suas rotas e entregas do dia.</string>
+    <string name="email_hint">E-mail ou matrícula</string>
     <string name="password_hint">Senha</string>
     <string name="btn_login">Entrar</string>
+    <string name="btn_offline_mode">Usar modo demonstração</string>
+    <string name="login_loading">Entrando…</string>
+    <string name="login_email_required">Informe seu e-mail ou matrícula</string>
+    <string name="login_password_required">Informe sua senha</string>
     <string name="login_empty_error">Preencha o e-mail e a senha</string>
     <string name="login_invalid_credentials">E-mail ou senha inválidos</string>
-    
+    <string name="login_success">Conectado com sucesso</string>
+    <string name="login_http_error">Não foi possível entrar (erro %1$d). Tente novamente.</string>
+    <string name="login_offline_toast">Modo demonstração ativado</string>
+    <string name="login_connection_failed_title">Sem conexão com o servidor</string>
+    <string name="login_connection_failed_message">Não foi possível alcançar %1$s.\n\nVerifique sua conexão ou o endereço do servidor. Você também pode continuar no modo demonstração.</string>
+    <string name="btn_change_server">Trocar servidor</string>
+    <string name="btn_demo">Modo demonstração</string>
+    <string name="version_label">Versão %1$s</string>
+
+    <!-- Servidor -->
+    <string name="server_chip">Servidor: %1$s</string>
+    <string name="cd_server_chip">Servidor atual: %1$s. Toque para alterar.</string>
+    <string name="server_dialog_title">Servidor da Orbi API</string>
+    <string name="server_option_cloud">Nuvem (orbi-api-em6s.onrender.com)</string>
+    <string name="server_option_localhost">Local (localhost:8080)</string>
+    <string name="server_option_custom">Endereço personalizado…</string>
+    <string name="server_custom_title">Endereço personalizado</string>
+    <string name="server_custom_hint">URL do servidor</string>
+    <string name="server_custom_helper">Ex.: http://192.168.1.10:8080/</string>
+    <string name="server_saved">Servidor alterado para %1$s</string>
+
     <!-- Home / Rotas -->
-    <string name="home_greeting">Olá, Motorista</string>
-    <string name="home_subtitle">Suas rotas de entrega atribuídas</string>
+    <string name="home_greeting">Olá, %1$s</string>
+    <string name="home_greeting_default">Olá, motorista</string>
+    <string name="home_subtitle">Suas rotas</string>
+    <string name="filter_label">Filtrar rotas por status</string>
     <string name="filter_all">Todas</string>
-    <string name="filter_pending">A fazer</string>
-    <string name="filter_delayed">Atrasado</string>
+    <string name="filter_assigned">A iniciar</string>
+    <string name="filter_pending">Pendente</string>
+    <string name="filter_delayed">Atrasadas</string>
     <string name="filter_in_progress">Em andamento</string>
     <string name="filter_completed">Concluídas</string>
-    <string name="empty_routes_title">Nenhuma rota encontrada</string>
-    <string name="empty_routes_message">Não há rotas disponíveis para o filtro selecionado.</string>
+    <string name="empty_routes_title">Nenhuma rota por aqui</string>
+    <string name="empty_routes_message">Não há rotas para o filtro selecionado. Puxe para baixo para atualizar.</string>
     <string name="btn_logout">Sair</string>
-    
+    <string name="cd_logout">Sair da conta</string>
+    <string name="logout_title">Sair do Orbi?</string>
+    <string name="logout_message">Você precisará entrar novamente para acessar suas rotas.</string>
+    <string name="logout_confirm">Sair</string>
+    <string name="sync_status_syncing">Sincronizando…</string>
+    <string name="sync_status_online">Sincronizado agora</string>
+    <string name="sync_status_offline">Offline · exibindo dados salvos</string>
+    <string name="sync_success">Rotas atualizadas</string>
+
+    <!-- Card de rota -->
+    <string name="route_label">Rota</string>
+    <plurals name="route_stops_count">
+        <item quantity="one">%1$d parada</item>
+        <item quantity="other">%1$d paradas</item>
+    </plurals>
+    <string name="route_duration">~%1$d min</string>
+    <string name="route_progress_fraction">%1$d/%2$d</string>
+    <string name="cd_route_card">Rota %1$s, %2$s. %3$s, cerca de %4$d minutos. %5$d de %6$d entregas concluídas. Toque para ver detalhes.</string>
+
     <!-- Detalhes da Rota -->
-    <string name="route_details_title">Detalhes da Rota</string>
-    <string name="stops_title">Ordem de Entrega</string>
-    <string name="btn_start_route">Iniciar Rota</string>
-    <string name="btn_complete_route">Concluir Rota</string>
-    <string name="route_completed_toast">Rota concluída com sucesso!</string>
-    
+    <string name="route_details_title">Detalhes da rota</string>
+    <string name="stat_stops">Paradas</string>
+    <string name="stat_completed">Concluídas</string>
+    <string name="stat_duration">Estimativa</string>
+    <string name="stops_title">Ordem de entrega</string>
+    <string name="cd_route_progress">%1$d por cento concluído</string>
+    <string name="btn_start_route">Iniciar rota</string>
+    <string name="btn_continue_route">Continuar rota</string>
+    <string name="btn_complete_route">Concluir rota</string>
+    <string name="btn_view_map">Ver no mapa</string>
+    <string name="status_route_completed_done">Rota Concluída</string>
+    <string name="route_completed_toast">Rota concluída. Bom trabalho!</string>
+
+    <!-- Parada (timeline) -->
+    <string name="waypoint_reason">Motivo: %1$s</string>
+    <string name="cd_waypoint">Parada %1$d, %2$s, %3$s. %4$s.</string>
+    <string name="cd_call_recipient">Ligar para %1$s</string>
+
     <!-- Mapa de Navegação -->
-    <string name="navigation_title">Navegação em Tempo Real</string>
-    <string name="next_stop_label">Próxima Parada</string>
-    <string name="btn_complete_stop">Concluir</string>
+    <string name="google_maps_key" translatable="false">AIzaSyBK0UgOnik71SQcy_IlGKL0ZIojxl3Avn4</string>
+    <string name="navigation_title">Navegação</string>
+    <string name="next_stop_label">Próxima parada</string>
+    <string name="nav_heading_to">Indo para a parada %1$d</string>
+    <string name="nav_calculating">Calculando rota…</string>
+    <string name="nav_eta">%1$.1f km · %2$d min</string>
+    <string name="nav_eta_fallback">850 m · 3 min</string>
+    <string name="nav_maneuver_follow">Siga em frente em direção ao endereço</string>
+    <string name="nav_maneuver_arriving">Você está se aproximando da parada</string>
+    <string name="nav_gps_acquiring">Obtendo GPS…</string>
+    <string name="nav_gps_permission_denied">Permissão de localização é necessária para acompanhar o veículo.</string>
+    <string name="cd_recenter">Centralizar no meu local</string>
+    <string name="cd_close_navigation">Sair da navegação</string>
+    <string name="btn_complete_stop">Concluir entrega</string>
     <string name="btn_skip_stop">Pular</string>
     <string name="btn_cancel_stop">Cancelar</string>
+    <string name="nav_action_complete">Concluir</string>
+    <string name="nav_action_pickup">Confirmar coleta</string>
+    <string name="nav_action_deliver">Confirmar entrega</string>
+    <string name="nav_drag_hint">Deslize para cima para confirmar</string>
+    <string name="nav_gps_active">GPS ativo</string>
+    <string name="nav_gps_demo">GPS demonstração</string>
+    <string name="nav_arrival_at">Chegada %1$s</string>
+    <string name="stop_completed">Entrega concluída</string>
+    <string name="stop_pickup_confirmed">Coleta confirmada! Rumo ao destinatário.</string>
+    <string name="stop_postponed">Parada enviada para o final da fila</string>
+    <string name="stop_skipped">Parada pulada</string>
+    <string name="stop_cancelled">Entrega cancelada</string>
+    <string name="stop_cancelled_local">Entrega cancelada (será sincronizada depois)</string>
+
+    <!-- Diálogo de SKIP (Pular para fim da fila ou Cancelar) -->
+    <string name="dialog_skip_mode_title">Opções da parada</string>
+    <string name="dialog_skip_mode_subtitle">Deseja adiar este endereço para o final da fila ou cancelar a entrega definitivamente?</string>
+    <string name="option_postpone_title">Pular para o fim da fila</string>
+    <string name="option_postpone_desc">O endereço é movido para o fim da rota. Você atenderá as próximas entregas e poderá retornar a esta antes de concluir a rota.</string>
+    <string name="option_cancel_title">Cancelar entrega definitivamente</string>
+    <string name="option_cancel_desc">Cancela a entrega na Orbi API com registro do motivo operacional.</string>
+    <string name="btn_select_cancel_reason">Escolher motivo de cancelamento</string>
+
+    <!-- Diálogo de justificativa -->
     <string name="dialog_skip_title">Pular este endereço?</string>
-    <string name="dialog_skip_subtitle">Selecione o motivo para pular a parada:</string>
-    <string name="dialog_cancel_title">Cancelar este endereço?</string>
-    <string name="dialog_cancel_subtitle">Selecione o motivo de cancelamento da entrega:</string>
-    <string name="reason_recipient_absent">Destinatário Ausente</string>
-    <string name="reason_blocked_road">Via Bloqueada / Obras</string>
-    <string name="reason_business_closed">Estabelecimento Fechado</string>
-    <string name="reason_address_not_found">Endereço Inexistente / Incorreto</string>
-    <string name="reason_customer_cancelled">Cancelado pelo Cliente</string>
-    <string name="reason_damaged_cargo">Carga Avariada / Danificada</string>
-    <string name="reason_other">Outro Motivo</string>
+    <string name="dialog_skip_subtitle">Selecione o motivo. Você seguirá para a próxima parada.</string>
+    <string name="dialog_cancel_title">Cancelar esta entrega?</string>
+    <string name="dialog_cancel_subtitle">Selecione o motivo do cancelamento.</string>
+    <string name="reason_recipient_absent">Destinatário ausente</string>
+    <string name="reason_blocked_road">Via bloqueada ou em obras</string>
+    <string name="reason_business_closed">Estabelecimento fechado</string>
+    <string name="reason_address_not_found">Endereço inexistente ou incorreto</string>
+    <string name="reason_customer_cancelled">Cancelado pelo cliente</string>
+    <string name="reason_damaged_cargo">Carga avariada</string>
+    <string name="reason_other">Outro motivo</string>
+    <string name="reason_other_hint">Descreva o motivo</string>
     <string name="btn_confirm">Confirmar</string>
+    <string name="btn_confirm_skip">Pular parada</string>
+    <string name="btn_confirm_cancel">Cancelar entrega</string>
     <string name="btn_dismiss">Voltar</string>
-    <string name="all_stops_handled_title">Todas as paradas tratadas!</string>
+
+    <!-- Fim da rota -->
+    <string name="all_stops_handled_title">Todas as paradas finalizadas</string>
     <string name="all_stops_handled_message">Todas as entregas desta rota foram concluídas, puladas ou canceladas. Deseja finalizar a rota agora?</string>
+    <string name="btn_finish_route_now">Finalizar rota</string>
+    <string name="btn_back_to_details">Ver detalhes</string>
 </resources>

@@ -1,161 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+    Detalhes da rota — resumo no topo, timeline de paradas rolável,
+    ação principal fixa na zona do polegar (rodapé).
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background_light"
-    android:fitsSystemWindows="true">
+    android:background="?android:attr/colorBackground"
+    android:orientation="vertical"
+    tools:context=".ui.details.RouteDetailsActivity">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:navigationContentDescription="@string/cd_back"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:navigationIconTint="?attr/colorOnSurface"
+        app:title="@string/route_details_title"
+        app:titleTextAppearance="?attr/textAppearanceTitleLarge" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvWaypoints"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        tools:itemCount="4"
+        tools:listitem="@layout/item_waypoint" />
+
+    <!-- Rodapé fixo com ação principal -->
+    <com.google.android.material.divider.MaterialDivider
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:dividerColor="?attr/colorOutlineVariant" />
 
     <LinearLayout
+        android:id="@+id/layoutBottomBar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        android:background="?attr/colorSurfaceContainerLow"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
-        <!-- Top App Bar com botão voltar e status -->
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/surface_white"
-            android:elevation="1dp"
-            android:paddingStart="16dp"
-            android:paddingTop="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="16dp">
-
-            <ImageButton
-                android:id="@+id/btnBack"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_alignParentStart="true"
-                android:layout_centerVertical="true"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="Voltar"
-                android:src="@drawable/ic_arrow_back" />
-
-            <TextView
-                android:id="@+id/tvToolbarTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="12dp"
-                android:layout_toEndOf="@id/btnBack"
-                android:text="@string/route_details_title"
-                android:textColor="@color/text_primary"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvHeaderStatus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentEnd="true"
-                android:layout_centerVertical="true"
-                android:background="@drawable/bg_badge_rounded"
-                android:paddingStart="12dp"
-                android:paddingTop="5dp"
-                android:paddingEnd="12dp"
-                android:paddingBottom="5dp"
-                android:text="Em andamento"
-                android:textColor="@color/status_in_progress"
-                android:textSize="12sp"
-                android:textStyle="bold" />
-        </RelativeLayout>
-
-        <!-- Card de Resumo da Rota -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginBottom="12dp"
-            app:cardBackgroundColor="@color/surface_white"
-            app:cardCornerRadius="20dp"
-            app:cardElevation="2dp"
-            app:strokeColor="@color/card_stroke"
-            app:strokeWidth="1dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="20dp">
-
-                <TextView
-                    android:id="@+id/tvRouteSummaryCode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ROTA-SP-01"
-                    android:textColor="@color/text_primary"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvStopsProgress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Carregando dados da rota..."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-
-                <com.google.android.material.progressindicator.LinearProgressIndicator
-                    android:id="@+id/progressBarDetails"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    app:indicatorColor="@color/primary"
-                    app:trackColor="@color/primary_container"
-                    app:trackCornerRadius="6dp"
-                    app:trackThickness="8dp" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Título da Seção de Paradas -->
-        <TextView
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnViewMap"
+            style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginBottom="8dp"
-            android:letterSpacing="0.04"
-            android:text="ORDEM DAS ENTREGAS"
-            android:textColor="@color/text_hint"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:layout_marginEnd="8dp"
+            android:text="@string/btn_view_map"
+            app:icon="@drawable/ic_place" />
 
-        <!-- Lista de Paradas em Ordem Sequencial com Timeline -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvWaypoints"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRouteAction"
+            android:layout_width="0dp"
             android:layout_weight="1"
-            android:clipToPadding="false"
-            android:paddingBottom="16dp" />
-
-        <!-- Barra Inferior com Botão Dinâmico de Ação (Thumb Zone) -->
-        <FrameLayout
-            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/surface_white"
-            android:elevation="6dp"
-            android:padding="16dp">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnRouteAction"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:backgroundTint="@color/primary"
-                android:text="@string/btn_start_route"
-                android:textAllCaps="false"
-                android:textColor="@color/on_primary"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                app:cornerRadius="14dp"
-                app:elevation="0dp" />
-        </FrameLayout>
-
+            android:text="@string/btn_start_route"
+            app:icon="@drawable/ic_navigation" />
     </LinearLayout>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</LinearLayout>

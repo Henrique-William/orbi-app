@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <!-- Outer Glow Circle -->
+    <path
+        android:fillColor="#332557D6"
+        android:pathData="M20,20m-18,0a18,18 0,1 1,36 0a18,18 0,1 1,-36 0" />
+    <!-- White Border Circle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,20m-13,0a13,13 0,1 1,26 0a13,13 0,1 1,-26 0" />
+    <!-- Primary Blue Circle -->
+    <path
+        android:fillColor="#2557D6"
+        android:pathData="M20,20m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0" />
+    <!-- White Directional Arrow -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,12 L14,24 L20,21 L26,24 Z" />
+</vector>

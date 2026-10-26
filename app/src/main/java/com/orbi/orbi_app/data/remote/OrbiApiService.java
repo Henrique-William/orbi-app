@@ -1,5 +1,6 @@
 package com.orbi.orbi_app.data.remote;
 
+import com.orbi.orbi_app.data.remote.dto.DeliveryDto;
 import com.orbi.orbi_app.data.remote.dto.DirectionsResponseDto;
 import com.orbi.orbi_app.data.remote.dto.LoginRequestDto;
 import com.orbi.orbi_app.data.remote.dto.LoginResponseDto;
@@ -27,6 +28,9 @@ public interface OrbiApiService {
 
     @GET("api/route/{id}")
     Call<RouteResponseDto> getRouteById(@Path("id") long id);
+
+    @GET("api/deliveries/route/{routeId}")
+    Call<List<DeliveryDto>> getDeliveriesByRouteId(@Path("routeId") long routeId);
 
     @GET("api/route/{id}/directions")
     Call<DirectionsResponseDto> getRouteDirections(@Path("id") long id);

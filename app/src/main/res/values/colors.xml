@@ -1,52 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Orbi Design System — Paleta (tema claro)
+    Baseada nos papéis de cor do Material 3. Todas as combinações texto/fundo
+    respeitam contraste mínimo WCAG AA (4.5:1 para texto, 3:1 para elementos gráficos).
+    As variantes do tema escuro ficam em values-night/colors.xml.
+-->
 <resources>
-    <!-- Paleta Principal Orbi (Minimalista 60/30/10) -->
-    <color name="primary">#2563EB</color>
-    <color name="primary_dark">#1D4ED8</color>
-    <color name="primary_container">#EFF6FF</color>
+    <!-- Marca (10%) -->
+    <color name="primary">#2557D6</color>
     <color name="on_primary">#FFFFFF</color>
+    <color name="primary_container">#DCE4FF</color>
+    <color name="on_primary_container">#0A1F5C</color>
+    <color name="inverse_primary">#B4C5FF</color>
 
-    <!-- Superfícies Neutras e Fundos (60%) -->
-    <color name="background_light">#F8FAFC</color>
-    <color name="surface_white">#FFFFFF</color>
-    <color name="card_stroke">#E2E8F0</color>
-    <color name="divider">#F1F5F9</color>
+    <color name="secondary">#565E71</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="secondary_container">#DDE2F3</color>
+    <color name="on_secondary_container">#131C2B</color>
 
-    <!-- Textos e Elementos Estruturais (30%) -->
-    <color name="text_primary">#0F172A</color>
-    <color name="text_secondary">#475569</color>
-    <color name="text_hint">#94A3B8</color>
+    <color name="tertiary">#146C2E</color>
+    <color name="on_tertiary">#FFFFFF</color>
+    <color name="tertiary_container">#C9F2D1</color>
+    <color name="on_tertiary_container">#002108</color>
 
-    <!-- Status de Rotas e Entregas (Pills Suaves) -->
-    <color name="status_pending">#475569</color>
-    <color name="status_pending_bg">#F1F5F9</color>
-    
-    <color name="status_delayed">#DC2626</color>
-    <color name="status_delayed_bg">#FEF2F2</color>
-    
-    <color name="status_in_progress">#2563EB</color>
-    <color name="status_in_progress_bg">#EFF6FF</color>
-    
-    <color name="status_completed">#059669</color>
-    <color name="status_completed_bg">#ECFDF5</color>
-    
-    <color name="status_skipped">#D97706</color>
-    <color name="status_skipped_bg">#FFFBEB</color>
-    
-    <color name="status_cancelled">#DC2626</color>
-    <color name="status_cancelled_bg">#FEF2F2</color>
+    <color name="error">#BA1A1A</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="error_container">#FFDAD6</color>
+    <color name="on_error_container">#410002</color>
 
-    <!-- Cores do Mapa e Navegação -->
-    <color name="map_road">#E2E8F0</color>
-    <color name="map_road_border">#CBD5E1</color>
-    <color name="map_background">#F1F5F9</color>
-    <color name="map_building">#E2E8F0</color>
-    <color name="map_green_area">#D1FAE5</color>
-    <color name="route_polyline">#2563EB</color>
-    <color name="route_polyline_glow">#332563EB</color>
-    <color name="driver_pin">#2563EB</color>
-    <color name="driver_pin_pulse">#262563EB</color>
-    <color name="destination_pin">#EF4444</color>
+    <!-- Superfícies neutras (60%) -->
+    <color name="background">#F8F9FC</color>
+    <color name="on_background">#191C20</color>
+    <color name="surface">#F8F9FC</color>
+    <color name="on_surface">#191C20</color>
+    <color name="surface_variant">#E1E2EC</color>
+    <color name="on_surface_variant">#44474F</color>
+    <color name="surface_container_lowest">#FFFFFF</color>
+    <color name="surface_container_low">#F2F3F7</color>
+    <color name="surface_container">#ECEDF1</color>
+    <color name="surface_container_high">#E7E8EC</color>
+    <color name="surface_container_highest">#E1E2E6</color>
+    <color name="inverse_surface">#2E3035</color>
+    <color name="inverse_on_surface">#F0F0F7</color>
+
+    <!-- Contornos (30%) -->
+    <color name="outline">#74777F</color>
+    <color name="outline_variant">#C4C6D0</color>
+
+    <!-- Status de rotas e entregas (texto / fundo da pílula) -->
+    <color name="status_pending">#44474F</color>
+    <color name="status_pending_bg">#E7E8EC</color>
+
+    <color name="status_in_progress">#1F4FC2</color>
+    <color name="status_in_progress_bg">#DCE4FF</color>
+
+    <color name="status_completed">#146C2E</color>
+    <color name="status_completed_bg">#D3F3DA</color>
+
+    <color name="status_skipped">#8A5100</color>
+    <color name="status_skipped_bg">#FFE3BF</color>
+
+    <color name="status_delayed">#B3261E</color>
+    <color name="status_delayed_bg">#FFE2DE</color>
+
+    <color name="status_cancelled">#B3261E</color>
+    <color name="status_cancelled_bg">#FFE2DE</color>
+
+    <!-- Mapa e navegação -->
+    <color name="nav_maneuver_bg">#0F172A</color>
+    <color name="nav_maneuver_surface">#1E293B</color>
+    <color name="nav_maneuver_accent">#38BDF8</color>
+    <color name="map_background">#EEF0F4</color>
+    <color name="map_road">#FFFFFF</color>
+    <color name="map_road_border">#D9DCE3</color>
+    <color name="map_building">#E3E6EC</color>
+    <color name="map_green_area">#DCEFE0</color>
+    <color name="map_label">#8A8E99</color>
+    <color name="route_polyline">#2557D6</color>
+    <color name="route_polyline_glow">#332557D6</color>
+    <color name="driver_pin">#2557D6</color>
+    <color name="driver_pin_pulse">#402557D6</color>
+    <color name="destination_pin">#D93025</color>
+
+    <!-- Ações da navegação (Drag-to-Confirm) -->
+    <color name="nav_action_cancel">#DC2626</color>
+    <color name="nav_action_cancel_soft">#1FDC2626</color>
+    <color name="nav_action_skip">#D97706</color>
+    <color name="nav_action_skip_soft">#1FD97706</color>
+    <color name="nav_action_complete">#059669</color>
+    <color name="nav_action_complete_soft">#1F059669</color>
+    <color name="nav_on_maneuver_secondary">#B3FFFFFF</color>
+    <color name="nav_on_maneuver_tertiary">#80FFFFFF</color>
+    <color name="nav_close_button_bg">#1AFFFFFF</color>
+    <color name="nav_gps_ok">#34D399</color>
 
     <!-- Padrões -->
     <color name="black">#FF000000</color>

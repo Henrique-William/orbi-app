@@ -17,7 +17,7 @@ public class Route implements Serializable {
         this.id = id;
         this.code = code;
         this.driverId = driverId;
-        this.status = status;
+        this.status = status != null ? status : RouteStatus.ASSIGNED;
         this.estimatedDurationMinutes = estimatedDurationMinutes;
         this.waypoints = waypoints != null ? waypoints : new ArrayList<>();
     }
@@ -69,7 +69,7 @@ public class Route implements Serializable {
     public int getCompletedWaypoints() {
         int count = 0;
         for (Waypoint w : waypoints) {
-            if (w.getStatus() == WaypointStatus.COMPLETED) {
+            if (w.isDelivered()) {
                 count++;
             }
         }
@@ -79,7 +79,7 @@ public class Route implements Serializable {
     public int getRemainingWaypoints() {
         int count = 0;
         for (Waypoint w : waypoints) {
-            if (w.getStatus() == WaypointStatus.PENDING || w.getStatus() == WaypointStatus.IN_TRANSIT) {
+            if (!w.isTerminal()) {
                 count++;
             }
         }
@@ -87,8 +87,9 @@ public class Route implements Serializable {
     }
 
     public boolean areAllWaypointsHandled() {
+        if (waypoints == null || waypoints.isEmpty()) return false;
         for (Waypoint w : waypoints) {
-            if (w.getStatus() == WaypointStatus.PENDING || w.getStatus() == WaypointStatus.IN_TRANSIT) {
+            if (!w.isTerminal()) {
                 return false;
             }
         }
@@ -96,11 +97,37 @@ public class Route implements Serializable {
     }
 
     public Waypoint getNextPendingWaypoint() {
+        if (waypoints == null) return null;
         for (Waypoint w : waypoints) {
-            if (w.getStatus() == WaypointStatus.PENDING || w.getStatus() == WaypointStatus.IN_TRANSIT) {
+            if (!w.isTerminal()) {
                 return w;
             }
         }
         return null;
+    }
+
+    /**
+     * Move a parada para o final da fila de pendentes da rota (reordena operacionalmente).
+     */
+    public boolean postponeWaypoint(long deliveryId) {
+        int targetIndex = -1;
+        for (int i = 0; i < waypoints.size(); i++) {
+            if (waypoints.get(i).getDeliveryId() == deliveryId) {
+                targetIndex = i;
+                break;
+            }
+        }
+
+        if (targetIndex >= 0 && targetIndex < waypoints.size()) {
+            Waypoint target = waypoints.remove(targetIndex);
+            waypoints.add(target);
+
+            // Reordena sequencialmente os números de exibição
+            for (int i = 0; i < waypoints.size(); i++) {
+                waypoints.get(i).setSequenceOrder(i + 1);
+            }
+            return true;
+        }
+        return false;
     }
 }

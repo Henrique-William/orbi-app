@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cabeçalho da lista de paradas: resumo da rota (rola junto com a timeline). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="8dp">
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/route_label"
+                        android:textAppearance="?attr/textAppearanceLabelMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/tvRouteSummaryCode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:accessibilityHeading="true"
+                        android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                        android:textColor="?attr/colorOnSurface"
+                        tools:text="RT-2048" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvHeaderStatus"
+                    style="@style/Widget.Orbi.StatusPill"
+                    android:layout_marginStart="12dp"
+                    tools:backgroundTint="@color/status_in_progress_bg"
+                    tools:text="Em andamento"
+                    tools:textColor="@color/status_in_progress" />
+            </LinearLayout>
+
+            <!-- Métricas -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/statTotal"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:focusable="true"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvStatTotal"
+                        style="@style/Widget.Orbi.StatValue"
+                        tools:text="8" />
+
+                    <TextView
+                        style="@style/Widget.Orbi.StatLabel"
+                        android:text="@string/stat_stops" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/statCompleted"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:focusable="true"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvStatCompleted"
+                        style="@style/Widget.Orbi.StatValue"
+                        tools:text="3" />
+
+                    <TextView
+                        style="@style/Widget.Orbi.StatLabel"
+                        android:text="@string/stat_completed" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/statDuration"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:focusable="true"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvStatDuration"
+                        style="@style/Widget.Orbi.StatValue"
+                        tools:text="~95 min" />
+
+                    <TextView
+                        style="@style/Widget.Orbi.StatLabel"
+                        android:text="@string/stat_duration" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/progressBarDetails"
+                style="@style/Widget.Orbi.LinearProgress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:max="100"
+                tools:progress="40" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <TextView
+        style="@style/Widget.Orbi.SectionTitle"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginBottom="16dp"
+        android:text="@string/stops_title" />
+</LinearLayout>

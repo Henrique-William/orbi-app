@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Orbi Design System — Paleta (tema escuro) -->
+<resources>
+    <color name="primary">#B4C5FF</color>
+    <color name="on_primary">#002A78</color>
+    <color name="primary_container">#1B43A8</color>
+    <color name="on_primary_container">#DCE4FF</color>
+    <color name="inverse_primary">#2557D6</color>
+
+    <color name="secondary">#C0C6DC</color>
+    <color name="on_secondary">#2A3042</color>
+    <color name="secondary_container">#404659</color>
+    <color name="on_secondary_container">#DDE2F3</color>
+
+    <color name="tertiary">#8FDA9F</color>
+    <color name="on_tertiary">#003914</color>
+    <color name="tertiary_container">#005321</color>
+    <color name="on_tertiary_container">#C9F2D1</color>
+
+    <color name="error">#FFB4AB</color>
+    <color name="on_error">#690005</color>
+    <color name="error_container">#93000A</color>
+    <color name="on_error_container">#FFDAD6</color>
+
+    <color name="background">#111318</color>
+    <color name="on_background">#E2E2E9</color>
+    <color name="surface">#111318</color>
+    <color name="on_surface">#E2E2E9</color>
+    <color name="surface_variant">#44474F</color>
+    <color name="on_surface_variant">#C4C6D0</color>
+    <color name="surface_container_lowest">#0C0E13</color>
+    <color name="surface_container_low">#191C20</color>
+    <color name="surface_container">#1D2024</color>
+    <color name="surface_container_high">#282A2F</color>
+    <color name="surface_container_highest">#33353A</color>
+    <color name="inverse_surface">#E2E2E9</color>
+    <color name="inverse_on_surface">#2E3035</color>
+
+    <color name="outline">#8E9099</color>
+    <color name="outline_variant">#44474F</color>
+
+    <color name="status_pending">#C4C6D0</color>
+    <color name="status_pending_bg">#33353A</color>
+
+    <color name="status_in_progress">#B4C5FF</color>
+    <color name="status_in_progress_bg">#1E3A80</color>
+
+    <color name="status_completed">#8FDA9F</color>
+    <color name="status_completed_bg">#0F3D1E</color>
+
+    <color name="status_skipped">#FFB95C</color>
+    <color name="status_skipped_bg">#4A2C00</color>
+
+    <color name="status_delayed">#FFB4AB</color>
+    <color name="status_delayed_bg">#5C1210</color>
+
+    <color name="status_cancelled">#FFB4AB</color>
+    <color name="status_cancelled_bg">#5C1210</color>
+
+    <color name="map_background">#1A1D23</color>
+    <color name="map_road">#2C3038</color>
+    <color name="map_road_border">#23262D</color>
+    <color name="map_building">#22252C</color>
+    <color name="map_green_area">#1C2B22</color>
+    <color name="map_label">#8E9099</color>
+    <color name="route_polyline">#8AA8FF</color>
+    <color name="route_polyline_glow">#408AA8FF</color>
+    <color name="driver_pin">#8AA8FF</color>
+    <color name="driver_pin_pulse">#408AA8FF</color>
+    <color name="destination_pin">#FF6B5E</color>
+</resources>

@@ -1,14 +1,67 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+
+    <!--
+        Tema base do Orbi (Material 3, DayNight).
+        As cores são resolvidas automaticamente para claro/escuro via values/ e values-night/.
+        Barras do sistema transparentes: as Activities usam EdgeToEdge e tratam os insets.
+    -->
     <style name="Base.Theme.Orbi_app" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Cores -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorOnPrimary">@color/on_primary</item>
         <item name="colorPrimaryContainer">@color/primary_container</item>
-        <item name="android:statusBarColor">@color/surface_white</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:navigationBarColor">@color/surface_white</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+        <item name="colorPrimaryInverse">@color/inverse_primary</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="colorSecondaryContainer">@color/secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+        <item name="colorTertiary">@color/tertiary</item>
+        <item name="colorOnTertiary">@color/on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/on_tertiary_container</item>
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/on_error</item>
+        <item name="colorErrorContainer">@color/error_container</item>
+        <item name="colorOnErrorContainer">@color/on_error_container</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorOnBackground">@color/on_background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        <item name="colorSurfaceContainerLowest">@color/surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/surface_container_highest</item>
+        <item name="colorSurfaceInverse">@color/inverse_surface</item>
+        <item name="colorOnSurfaceInverse">@color/inverse_on_surface</item>
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outline_variant</item>
+
+        <!-- Formas -->
+        <item name="shapeAppearanceCornerSmall">@style/ShapeAppearance.Orbi.Small</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.Orbi.Medium</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.Orbi.Large</item>
+
+        <!-- Componentes -->
+        <item name="materialButtonStyle">@style/Widget.Orbi.Button</item>
+        <item name="materialCardViewStyle">@style/Widget.Orbi.Card</item>
+        <item name="textInputStyle">@style/Widget.Orbi.TextInputLayout</item>
+        <item name="chipStyle">@style/Widget.Orbi.Chip.Filter</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Orbi.Dialog</item>
+        <item name="snackbarStyle">@style/Widget.Material3.Snackbar</item>
+
+        <!-- Barras do sistema -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
     </style>
 
     <style name="Theme.Orbi_app" parent="Base.Theme.Orbi_app" />
+
+    <style name="ThemeOverlay.Orbi.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearance.Orbi.ExtraLarge</item>
+    </style>
 </resources>

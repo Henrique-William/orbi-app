@@ -22,8 +22,17 @@ public class RouteResponseDto {
     @SerializedName("totalCost")
     private Double totalCost;
 
+    @SerializedName("totalStops")
+    private Integer totalStops;
+
     @SerializedName("createdAt")
     private String createdAt;
+
+    @SerializedName("assignedAt")
+    private String assignedAt;
+
+    @SerializedName("finalizedAt")
+    private String finalizedAt;
 
     @SerializedName("deliveries")
     private List<DeliveryDto> deliveries;
@@ -52,8 +61,20 @@ public class RouteResponseDto {
         return totalCost != null ? totalCost : 0.0;
     }
 
+    public Integer getTotalStops() {
+        return totalStops;
+    }
+
     public String getCreatedAt() {
         return createdAt;
+    }
+
+    public String getAssignedAt() {
+        return assignedAt;
+    }
+
+    public String getFinalizedAt() {
+        return finalizedAt;
     }
 
     public List<DeliveryDto> getDeliveries() {

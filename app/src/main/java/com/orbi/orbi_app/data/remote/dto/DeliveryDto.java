@@ -15,6 +15,18 @@ public class DeliveryDto {
     @SerializedName("address")
     private String address;
 
+    @SerializedName("latitude")
+    private Double latitude;
+
+    @SerializedName("longitude")
+    private Double longitude;
+
+    @SerializedName("recipientEmail")
+    private String recipientEmail;
+
+    @SerializedName("pickedUpAt")
+    private String pickedUpAt;
+
     @SerializedName("deliveredAt")
     private String deliveredAt;
 
@@ -32,6 +44,22 @@ public class DeliveryDto {
 
     public String getAddress() {
         return address != null ? address : "Endereço não informado";
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public String getRecipientEmail() {
+        return recipientEmail;
+    }
+
+    public String getPickedUpAt() {
+        return pickedUpAt;
     }
 
     public String getDeliveredAt() {
