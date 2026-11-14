@@ -5,10 +5,13 @@ import android.text.TextUtils;
 
 import com.orbi.orbi_app.data.SessionManager;
 
+import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -32,7 +35,18 @@ public class ApiClient {
                     .writeTimeout(20, TimeUnit.SECONDS)
                     .addInterceptor(chain -> {
                         Request original = chain.request();
-                        Request.Builder builder = original.newBuilder();
+                        HttpUrl url = original.url();
+                        String host = url.host();
+                        boolean emulator = SessionManager.isEmulator();
+
+                        // Em dispositivo físico, 10.0.2.2 não existe e causaria timeout de 15s;
+                        // tenta primeiro localhost (caso adb reverse esteja ativo).
+                        if (!emulator && "10.0.2.2".equals(host)) {
+                            url = url.newBuilder().host("localhost").build();
+                            host = "localhost";
+                        }
+
+                        Request.Builder builder = original.newBuilder().url(url);
 
                         String token = sessionManager.getAuthToken();
                         if (!TextUtils.isEmpty(token)) {
@@ -42,7 +56,21 @@ public class ApiClient {
                         builder.header("Content-Type", "application/json");
                         builder.header("Accept", "application/json");
 
-                        return chain.proceed(builder.build());
+                        Request request = builder.build();
+                        try {
+                            return chain.proceed(request);
+                        } catch (ConnectException e) {
+                            // Se localhost/127.0.0.1 recusar conexão, faz fallback automático:
+                            // - Emulador -> 10.0.2.2 (loopback para o PC host)
+                            // - Dispositivo físico -> IP da rede local (LAN)
+                            if ("localhost".equalsIgnoreCase(host) || "127.0.0.1".equals(host)) {
+                                String fallbackHost = emulator ? "10.0.2.2" : "192.168.1.60";
+                                HttpUrl fallbackUrl = request.url().newBuilder().host(fallbackHost).build();
+                                Request fallbackRequest = request.newBuilder().url(fallbackUrl).build();
+                                return chain.proceed(fallbackRequest);
+                            }
+                            throw e;
+                        }
                     })
                     .addInterceptor(loggingInterceptor)
                     .build();
@@ -63,6 +91,7 @@ public class ApiClient {
         sessionManager.setServerUrl(newUrl);
         apiService = null;
         retrofit = null;
+        com.orbi.orbi_app.data.RouteRepository.getInstance().resetForNewSession();
         getApiService(context);
     }
 

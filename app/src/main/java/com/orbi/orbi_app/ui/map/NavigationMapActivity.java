@@ -1,6 +1,9 @@
 package com.orbi.orbi_app.ui.map;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -10,7 +13,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.drawable.Drawable;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -20,11 +22,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Looper;
 import android.text.TextUtils;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -39,6 +46,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -53,17 +61,24 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.Dot;
+import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.RoundCap;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.progressindicator.LinearProgressIndicator;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.orbi.orbi_app.R;
@@ -72,8 +87,11 @@ import com.orbi.orbi_app.data.RepositoryCallback;
 import com.orbi.orbi_app.data.RouteRepository;
 import com.orbi.orbi_app.data.remote.dto.DirectionsResponseDto;
 import com.orbi.orbi_app.data.remote.dto.GeometryDto;
+import com.orbi.orbi_app.data.remote.dto.SegmentDto;
+import com.orbi.orbi_app.data.remote.dto.StepDto;
 import com.orbi.orbi_app.model.Route;
 import com.orbi.orbi_app.model.Waypoint;
+import com.orbi.orbi_app.model.WaypointStatus;
 import com.orbi.orbi_app.ui.home.HomeActivity;
 
 import org.json.JSONArray;
@@ -82,6 +100,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
@@ -107,15 +126,23 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     private ImageView ivManeuverIcon;
     private TextView tvManeuverDistance;
     private TextView tvManeuverInstruction;
+    private View layoutNextManeuver;
+    private ImageView ivNextManeuverIcon;
+    private TextView tvNextManeuverInstruction;
     private TextView tvNavHeading;
     private TextView tvGpsStatus;
     private View viewGpsDot;
 
-    // Recentralizar
+    // Velocímetro e Controles Flutuantes do Mapa
+    private TextView tvCurrentSpeed;
+    private FloatingActionButton fabRouteOverview;
     private FloatingActionButton fabRecenter;
+    private boolean isOverviewMode = false;
 
     // Painel Inferior Ancorado
     private View layoutSheetContent;
+    private View layoutSheetHeader;
+    private ImageView ivSheetChevron;
     private TextView tvNavSequence;
     private TextView tvNavRecipient;
     private TextView tvNavAddress;
@@ -124,13 +151,19 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     private TextView tvNavArrivalTime;
     private MaterialButton btnCallRecipient;
 
-    // Zonas Demarcadas e Botões Circulares Drag-to-Confirm (Pular e Avançar/Concluir)
-    private FrameLayout layoutZoneSkip;
-    private FrameLayout layoutZoneComplete;
-    private FrameLayout btnCircleSkip;
-    private FrameLayout btnCircleComplete;
-    private TextView tvCompleteLabel;
-    private ImageView ivCompleteIcon;
+    // Painel Inferior Expansível, Detalhes da Rota e Ações Flat Design
+    private FrameLayout layoutDragBadge;
+    private LinearLayout layoutExpandableContent;
+    private TextView tvExpandedRouteCode;
+    private TextView tvExpandedStopStage;
+    private TextView tvExpandedRouteProgress;
+    private LinearProgressIndicator progressRouteStops;
+    private TextView tvExpandedNextStop;
+    private RadialHoldButton btnRadialSkip;
+    private RadialHoldButton btnRadialCancel;
+    private HorizontalSlideToConfirmView slideConcludeDelivery;
+    private boolean isSheetExpanded = false;
+    private ValueAnimator sheetAnimator;
 
     // Dados e Estado
     private RouteRepository repository;
@@ -138,15 +171,23 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     private Route currentRoute;
     private Waypoint currentWaypoint;
 
-    // Camadas do Google Maps
+    // Camadas do Google Maps & Motor Uber Directions
     private Marker driverMarker;
+    private ValueAnimator puckAnimator;
     private Marker destinationMarker;
+    private Circle destinationHaloCircle;
+    private final List<Marker> routeStopMarkers = new ArrayList<>();
     private Polyline routePolyline;
     private Polyline routePolylineCasing;
+    private Polyline curbWalkingPolyline;
     private LatLng currentDriverLatLng;
     private LatLng currentTargetLatLng;
     private boolean isFollowingDriver = true;
     private List<LatLng> currentRoutePoints;
+    private final List<RouteStep> currentRouteSteps = new ArrayList<>();
+    private int currentStepIndex = 0;
+    private double currentRouteTotalDistanceMeters = 0.0;
+    private double currentRouteTotalDurationSeconds = 0.0;
     private long lastRouteCalculationTime = 0;
     private LatLng lastRouteOrigin = null;
     private boolean isRealGpsAcquired = false;
@@ -200,29 +241,46 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         ivManeuverIcon = findViewById(R.id.ivManeuverIcon);
         tvManeuverDistance = findViewById(R.id.tvManeuverDistance);
         tvManeuverInstruction = findViewById(R.id.tvManeuverInstruction);
+        layoutNextManeuver = findViewById(R.id.layoutNextManeuver);
+        ivNextManeuverIcon = findViewById(R.id.ivNextManeuverIcon);
+        tvNextManeuverInstruction = findViewById(R.id.tvNextManeuverInstruction);
         tvNavHeading = findViewById(R.id.tvNavHeading);
         tvGpsStatus = findViewById(R.id.tvGpsStatus);
         viewGpsDot = findViewById(R.id.viewGpsDot);
 
+        tvCurrentSpeed = findViewById(R.id.tvCurrentSpeed);
+        fabRouteOverview = findViewById(R.id.fabRouteOverview);
         fabRecenter = findViewById(R.id.fabRecenter);
         layoutSheetContent = findViewById(R.id.layoutSheetContent);
+        layoutSheetHeader = findViewById(R.id.layoutSheetHeader);
+        ivSheetChevron = findViewById(R.id.ivSheetChevron);
 
+        // Alça e Conteúdo Expansível
+        layoutDragBadge = findViewById(R.id.layoutDragBadge);
+        layoutExpandableContent = findViewById(R.id.layoutExpandableContent);
+
+        // Resumo detalhado da rota (dentro do conteúdo expansível)
+        tvExpandedRouteCode = findViewById(R.id.tvExpandedRouteCode);
+        tvExpandedStopStage = findViewById(R.id.tvExpandedStopStage);
+        tvExpandedRouteProgress = findViewById(R.id.tvExpandedRouteProgress);
+        progressRouteStops = findViewById(R.id.progressRouteStops);
+        tvExpandedNextStop = findViewById(R.id.tvExpandedNextStop);
+
+        // Métricas e Endereço (Sempre Visíveis durante a rota)
         tvNavSequence = findViewById(R.id.tvNavSequence);
-        tvNavRecipient = findViewById(R.id.tvNavRecipient);
         tvNavAddress = findViewById(R.id.tvNavAddress);
         tvNavDistance = findViewById(R.id.tvNavDistance);
         tvNavDuration = findViewById(R.id.tvNavDuration);
         tvNavArrivalTime = findViewById(R.id.tvNavArrivalTime);
+
+        // Informações do Destinatário (Dentro do conteúdo expansível)
+        tvNavRecipient = findViewById(R.id.tvNavRecipient);
         btnCallRecipient = findViewById(R.id.btnCallRecipient);
 
-        layoutZoneSkip = findViewById(R.id.layoutZoneSkip);
-        layoutZoneComplete = findViewById(R.id.layoutZoneComplete);
-
-        btnCircleSkip = findViewById(R.id.btnCircleSkip);
-        btnCircleComplete = findViewById(R.id.btnCircleComplete);
-
-        tvCompleteLabel = findViewById(R.id.tvCompleteLabel);
-        ivCompleteIcon = findViewById(R.id.ivCompleteIcon);
+        // Botões de Ação Flat (Dentro do conteúdo expansível)
+        btnRadialSkip = findViewById(R.id.btnRadialSkip);
+        btnRadialCancel = findViewById(R.id.btnRadialCancel);
+        slideConcludeDelivery = findViewById(R.id.slideConcludeDelivery);
     }
 
     private void setupWindowInsets() {
@@ -249,7 +307,11 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         });
 
         // Mantém a área útil do mapa (câmera e logo do Google) entre os painéis sobrepostos
-        View.OnLayoutChangeListener overlayListener = (v, l, t, r, b, ol, ot, or, ob) -> updateMapPadding();
+        View.OnLayoutChangeListener overlayListener = (v, l, t, r, b, ol, ot, or, ob) -> {
+            if (sheetAnimator == null || !sheetAnimator.isRunning()) {
+                updateMapPadding();
+            }
+        };
         cardTopBanner.addOnLayoutChangeListener(overlayListener);
         cardBottomControls.addOnLayoutChangeListener(overlayListener);
     }
@@ -258,10 +320,14 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         if (googleMap == null || cardTopBanner.getHeight() == 0 || cardBottomControls.getHeight() == 0) return;
         int topBannerBottom = cardTopBanner.getBottom();
         int bottomSheetTop = Math.max(0, rootLayout.getHeight() - cardBottomControls.getTop());
-        int availableHeight = Math.max(0, rootLayout.getHeight() - topBannerBottom - bottomSheetTop);
-        // Desloca o centro focal da câmera para o terço inferior da área visível (visão Google Maps Navigation)
-        int lookAheadOffset = (int) (availableHeight * 0.42f);
-        googleMap.setPadding(0, topBannerBottom + lookAheadOffset, 0, bottomSheetTop);
+        if (isOverviewMode) {
+            googleMap.setPadding(dpToPx(24), topBannerBottom + dpToPx(16), dpToPx(24), bottomSheetTop + dpToPx(16));
+        } else {
+            int availableHeight = Math.max(0, rootLayout.getHeight() - topBannerBottom - bottomSheetTop);
+            // Desloca o centro focal da câmera para o terço inferior da área visível (visão Uber Driver 3D)
+            int lookAheadOffset = (int) (availableHeight * 0.34f);
+            googleMap.setPadding(0, topBannerBottom + lookAheadOffset, 0, bottomSheetTop);
+        }
     }
 
     private int dpToPx(int dp) {
@@ -274,25 +340,265 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     }
 
     /**
-     * Configura o gesto de segurar e arrastar para fora da área demarcada (Drag-to-Confirm)
-     * com vibração no limiar e disparo somente ao soltar o dedo fora da área.
+     * Configura o painel inferior expansível e as ações em Flat Design:
+     * - Durante a rota, exibe apenas métricas e endereço.
+     * - Ao arrastar a alça para cima ou tocar, revela com animação suave as informações do cliente e botões.
+     * - Botões neutros Pular e Cancelar com expansão radial colorida em 3 segundos.
+     * - Slide horizontal para conclusão com vibração tátil.
      */
     private void setupDragActionButtons() {
-        // 1. Ação PULAR (Âmbar) - Opções: Enviar para o final da fila ou Cancelar
-        btnCircleSkip.setOnTouchListener(new DragToConfirmListener(
-                layoutZoneSkip,
-                R.drawable.bg_drag_zone_skip,
-                R.drawable.bg_drag_zone_skip_active,
-                this::handleSkipStop
-        ));
+        if (btnRadialSkip != null) {
+            btnRadialSkip.setButtonConfig(
+                    R.drawable.ic_skip,
+                    getString(R.string.btn_skip_stop),
+                    ContextCompat.getColor(this, R.color.nav_action_skip)
+            );
+            btnRadialSkip.setOnHoldTriggeredListener(this::handleSkipStop);
+        }
 
-        // 2. Ação AVANÇAR / CONCLUIR (Verde) - Coletar (se AT_PICKUP) ou Entregar (se IN_TRANSIT)
-        btnCircleComplete.setOnTouchListener(new DragToConfirmListener(
-                layoutZoneComplete,
-                R.drawable.bg_drag_zone_complete,
-                R.drawable.bg_drag_zone_complete_active,
-                this::handleCompleteStop
-        ));
+        if (btnRadialCancel != null) {
+            btnRadialCancel.setButtonConfig(
+                    R.drawable.ic_cancel,
+                    getString(R.string.btn_cancel_stop),
+                    ContextCompat.getColor(this, R.color.nav_action_cancel)
+            );
+            btnRadialCancel.setOnHoldTriggeredListener(this::handleCancelStop);
+        }
+
+        if (slideConcludeDelivery != null) {
+            slideConcludeDelivery.setOnSlideConfirmedListener(this::handleConcludeStop);
+        }
+
+        setupExpandableSheetGesture();
+    }
+
+    private void setupExpandableSheetGesture() {
+        if (layoutExpandableContent == null) return;
+
+        final int touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+
+        View.OnTouchListener headerTouchListener = new View.OnTouchListener() {
+            private float downRawY = 0f;
+            private float downRawX = 0f;
+            private int startHeight = 0;
+            private int maxExpandedHeight = 0;
+            private int currentDraggedHeight = 0;
+            private boolean isDraggingVertical = false;
+            private boolean limitHapticFired = false;
+            private VelocityTracker velocityTracker;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        if (sheetAnimator != null && sheetAnimator.isRunning()) {
+                            sheetAnimator.cancel();
+                        }
+                        updateExpandedRouteDetails();
+                        maxExpandedHeight = measureExpandableContentHeight();
+                        startHeight = (layoutExpandableContent.getVisibility() == View.VISIBLE)
+                                ? (layoutExpandableContent.getHeight() > 0 ? layoutExpandableContent.getHeight() : maxExpandedHeight)
+                                : 0;
+                        currentDraggedHeight = startHeight;
+                        downRawY = event.getRawY();
+                        downRawX = event.getRawX();
+                        isDraggingVertical = false;
+                        limitHapticFired = false;
+                        if (velocityTracker == null) {
+                            velocityTracker = VelocityTracker.obtain();
+                        } else {
+                            velocityTracker.clear();
+                        }
+                        velocityTracker.addMovement(event);
+                        v.getParent().requestDisallowInterceptTouchEvent(true);
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        if (velocityTracker != null) {
+                            velocityTracker.addMovement(event);
+                        }
+                        float dy = event.getRawY() - downRawY;
+                        float dx = event.getRawX() - downRawX;
+
+                        if (!isDraggingVertical && Math.abs(dy) > touchSlop && Math.abs(dy) > Math.abs(dx)) {
+                            isDraggingVertical = true;
+                            if (maxExpandedHeight <= 0) {
+                                maxExpandedHeight = measureExpandableContentHeight();
+                            }
+                        }
+
+                        if (isDraggingVertical && maxExpandedHeight > 0) {
+                            // O painel acompanha 1:1 o movimento vertical do dedo entre 0 (fechado) e maxExpandedHeight (limite aberto)
+                            int newHeight = Math.round(startHeight - dy);
+                            if (newHeight <= 0) {
+                                newHeight = 0;
+                                if (!limitHapticFired && startHeight > 0) {
+                                    limitHapticFired = true;
+                                    v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                                }
+                            } else if (newHeight >= maxExpandedHeight) {
+                                newHeight = maxExpandedHeight;
+                                if (!limitHapticFired && startHeight < maxExpandedHeight) {
+                                    limitHapticFired = true;
+                                    v.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+                                }
+                            } else {
+                                limitHapticFired = false;
+                            }
+
+                            currentDraggedHeight = newHeight;
+                            float progress = newHeight / (float) maxExpandedHeight;
+
+                            if (newHeight > 0 && layoutExpandableContent.getVisibility() != View.VISIBLE) {
+                                layoutExpandableContent.setVisibility(View.VISIBLE);
+                            }
+                            layoutExpandableContent.getLayoutParams().height = newHeight;
+                            layoutExpandableContent.setAlpha(progress);
+                            layoutExpandableContent.requestLayout();
+
+                            if (ivSheetChevron != null) {
+                                ivSheetChevron.setRotation(180f * progress);
+                            }
+                        }
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        float totalDy = event.getRawY() - downRawY;
+                        float totalDx = event.getRawX() - downRawX;
+
+                        float yVelocity = 0f;
+                        if (velocityTracker != null) {
+                            velocityTracker.addMovement(event);
+                            velocityTracker.computeCurrentVelocity(1000);
+                            yVelocity = velocityTracker.getYVelocity();
+                            velocityTracker.recycle();
+                            velocityTracker = null;
+                        }
+
+                        if (isDraggingVertical && maxExpandedHeight > 0) {
+                            boolean shouldExpand;
+                            if (yVelocity < -380f) {
+                                shouldExpand = true;
+                            } else if (yVelocity > 380f) {
+                                shouldExpand = false;
+                            } else {
+                                shouldExpand = currentDraggedHeight >= (maxExpandedHeight * 0.45f);
+                            }
+                            animateSheetToState(shouldExpand, currentDraggedHeight, maxExpandedHeight);
+                        } else if (event.getActionMasked() == MotionEvent.ACTION_UP
+                                && Math.abs(totalDy) < touchSlop * 1.5f
+                                && Math.abs(totalDx) < touchSlop * 1.5f) {
+                            v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                            v.performClick();
+                            toggleSheetExpansion(!isSheetExpanded);
+                        }
+                        isDraggingVertical = false;
+                        return true;
+                }
+                return false;
+            }
+        };
+
+        if (layoutSheetHeader != null) {
+            layoutSheetHeader.setOnTouchListener(headerTouchListener);
+        }
+        if (layoutDragBadge != null) {
+            layoutDragBadge.setOnTouchListener(headerTouchListener);
+        }
+        View layoutAddressInfo = findViewById(R.id.layoutAddressInfo);
+        if (layoutAddressInfo != null) {
+            layoutAddressInfo.setOnTouchListener(headerTouchListener);
+        }
+    }
+
+    private int measureExpandableContentHeight() {
+        if (cardBottomControls == null || layoutExpandableContent == null || layoutSheetContent == null) return 0;
+        int availableWidth = cardBottomControls.getWidth()
+                - layoutSheetContent.getPaddingLeft()
+                - layoutSheetContent.getPaddingRight();
+        if (availableWidth <= 0) return 0;
+
+        layoutExpandableContent.measure(
+                View.MeasureSpec.makeMeasureSpec(availableWidth, View.MeasureSpec.EXACTLY),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        );
+        return layoutExpandableContent.getMeasuredHeight();
+    }
+
+    private void toggleSheetExpansion(boolean expand) {
+        if (cardBottomControls == null || layoutExpandableContent == null) return;
+        updateExpandedRouteDetails();
+        int maxExpandedHeight = measureExpandableContentHeight();
+        int fromHeight = (layoutExpandableContent.getVisibility() == View.VISIBLE)
+                ? (layoutExpandableContent.getHeight() > 0 ? layoutExpandableContent.getHeight() : (isSheetExpanded ? maxExpandedHeight : 0))
+                : 0;
+        animateSheetToState(expand, fromHeight, maxExpandedHeight);
+    }
+
+    private void animateSheetToState(boolean expand, int fromHeight, int maxExpandedHeight) {
+        isSheetExpanded = expand;
+
+        if (sheetAnimator != null && sheetAnimator.isRunning()) {
+            sheetAnimator.cancel();
+        }
+
+        if (maxExpandedHeight <= 0) {
+            layoutExpandableContent.setVisibility(expand ? View.VISIBLE : View.GONE);
+            layoutExpandableContent.setAlpha(expand ? 1f : 0f);
+            layoutExpandableContent.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+            layoutExpandableContent.requestLayout();
+            if (ivSheetChevron != null) {
+                ivSheetChevron.setRotation(expand ? 180f : 0f);
+            }
+            updateMapPadding();
+            return;
+        }
+
+        final int targetHeight = expand ? maxExpandedHeight : 0;
+        if (expand && layoutExpandableContent.getVisibility() != View.VISIBLE) {
+            layoutExpandableContent.getLayoutParams().height = Math.max(0, fromHeight);
+            layoutExpandableContent.setAlpha(fromHeight / (float) maxExpandedHeight);
+            layoutExpandableContent.setVisibility(View.VISIBLE);
+            layoutExpandableContent.requestLayout();
+        }
+
+        long duration = Math.max(120L, Math.min(260L,
+                (long) (260f * (Math.abs(targetHeight - fromHeight) / (float) maxExpandedHeight))));
+
+        sheetAnimator = ValueAnimator.ofInt(fromHeight, targetHeight);
+        sheetAnimator.setDuration(duration);
+        sheetAnimator.setInterpolator(new FastOutSlowInInterpolator());
+        sheetAnimator.addUpdateListener(anim -> {
+            int h = (int) anim.getAnimatedValue();
+            float progress = h / (float) maxExpandedHeight;
+            layoutExpandableContent.getLayoutParams().height = h;
+            layoutExpandableContent.setAlpha(progress);
+            layoutExpandableContent.requestLayout();
+            if (ivSheetChevron != null) {
+                ivSheetChevron.setRotation(180f * progress);
+            }
+        });
+        sheetAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (expand) {
+                    layoutExpandableContent.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    layoutExpandableContent.setAlpha(1f);
+                    layoutExpandableContent.setVisibility(View.VISIBLE);
+                } else {
+                    layoutExpandableContent.setVisibility(View.GONE);
+                    layoutExpandableContent.getLayoutParams().height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    layoutExpandableContent.setAlpha(1f);
+                }
+                if (ivSheetChevron != null) {
+                    ivSheetChevron.setRotation(expand ? 180f : 0f);
+                }
+                layoutExpandableContent.requestLayout();
+                cardBottomControls.post(() -> updateMapPadding());
+            }
+        });
+        sheetAnimator.start();
     }
 
     private void setupOrientationSensor() {
@@ -352,9 +658,15 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         btnCloseNav.setOnClickListener(v -> finish());
 
         fabRecenter.setOnClickListener(v -> {
+            isOverviewMode = false;
             isFollowingDriver = true;
+            updateMapPadding();
             recenterOnDriver();
         });
+
+        if (fabRouteOverview != null) {
+            fabRouteOverview.setOnClickListener(v -> toggleRouteOverview());
+        }
 
         btnCallRecipient.setOnClickListener(v -> {
             if (currentWaypoint != null && !TextUtils.isEmpty(currentWaypoint.getRecipientPhone())) {
@@ -483,19 +795,22 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
             return;
         }
 
-        // 1. Atualizar Informações do Cockpit Inferior
+        // Recolhe o painel ao carregar uma nova parada para focar nas métricas e endereço
+        if (isSheetExpanded) {
+            toggleSheetExpansion(false);
+        }
+
+        // 1. Atualizar Informações do Cockpit Inferior e Resumo Expandido da Rota
         tvNavSequence.setText(currentWaypoint.getFormattedSequence());
         tvNavRecipient.setText(currentWaypoint.getRecipientName());
         tvNavAddress.setText(currentWaypoint.getFullAddress());
         btnCallRecipient.setContentDescription(getString(R.string.cd_call_recipient, currentWaypoint.getRecipientName()));
+        updateExpandedRouteDetails();
 
-        // Atualiza a ação contextual do botão de avanço (Coleta vs Entrega conforme Orbi API)
-        if (currentWaypoint.isAtPickup()) {
-            if (tvCompleteLabel != null) tvCompleteLabel.setText(R.string.nav_action_pickup);
-            if (ivCompleteIcon != null) ivCompleteIcon.setImageResource(R.drawable.ic_navigation);
-        } else {
-            if (tvCompleteLabel != null) tvCompleteLabel.setText(R.string.nav_action_deliver);
-            if (ivCompleteIcon != null) ivCompleteIcon.setImageResource(R.drawable.ic_check);
+        // Atualiza e reinicia o slide de conclusão
+        if (slideConcludeDelivery != null) {
+            slideConcludeDelivery.setLabel(getString(R.string.slide_to_deliver));
+            slideConcludeDelivery.resetSmoothly();
         }
 
         // 2. Atualizar Banner Superior (Uber Driver Maneuver)
@@ -509,6 +824,69 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
 
         // 4. Iniciar ou atualizar Rastreamento GPS
         requestLocationUpdates();
+    }
+
+    /**
+     * Atualiza as informações extras da rota exibidas quando o painel inferior é expandido.
+     */
+    private void updateExpandedRouteDetails() {
+        if (currentRoute == null || currentWaypoint == null) return;
+
+        if (tvExpandedRouteCode != null) {
+            String code = !TextUtils.isEmpty(currentRoute.getCode())
+                    ? currentRoute.getCode()
+                    : "ROTA-ORBI-" + currentRoute.getId();
+            tvExpandedRouteCode.setText(code);
+        }
+
+        if (tvExpandedStopStage != null) {
+            if (currentWaypoint.isAtPickup()) {
+                tvExpandedStopStage.setText(R.string.status_wp_at_pickup);
+            } else {
+                tvExpandedStopStage.setText(R.string.status_wp_in_transit);
+            }
+        }
+
+        int total = Math.max(1, currentRoute.getTotalWaypoints());
+        int completed = currentRoute.getCompletedWaypoints();
+        int currentSeq = currentWaypoint.getSequenceOrder();
+
+        if (tvExpandedRouteProgress != null) {
+            tvExpandedRouteProgress.setText(getString(R.string.nav_route_progress_summary, currentSeq, total, completed));
+        }
+
+        if (progressRouteStops != null) {
+            int progressPercent = (int) Math.round(((completed + 0.35) / total) * 100.0);
+            progressRouteStops.setProgress(Math.max(8, Math.min(100, progressPercent)));
+        }
+
+        if (tvExpandedNextStop != null) {
+            Waypoint nextFollowing = findFollowingPendingWaypoint(currentWaypoint.getDeliveryId());
+            if (nextFollowing != null) {
+                tvExpandedNextStop.setText(getString(
+                        R.string.nav_next_stop_preview,
+                        nextFollowing.getSequenceOrder(),
+                        nextFollowing.getFullAddress()
+                ));
+            } else {
+                tvExpandedNextStop.setText(R.string.nav_last_stop_preview);
+            }
+        }
+    }
+
+    private Waypoint findFollowingPendingWaypoint(long activeDeliveryId) {
+        if (currentRoute == null || currentRoute.getWaypoints() == null) return null;
+        boolean passedActive = false;
+        for (Waypoint w : currentRoute.getWaypoints()) {
+            if (w.getDeliveryId() == activeDeliveryId) {
+                passedActive = true;
+                continue;
+            }
+            if (passedActive && !w.isTerminal()) {
+                return w;
+            }
+        }
+        return null;
     }
 
     /**
@@ -567,6 +945,17 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         if (destinationMarker != null) {
             destinationMarker.remove();
         }
+        if (destinationHaloCircle != null) {
+            destinationHaloCircle.remove();
+        }
+
+        destinationHaloCircle = googleMap.addCircle(new CircleOptions()
+                .center(currentTargetLatLng)
+                .radius(24.0)
+                .strokeWidth(3f)
+                .strokeColor(0x55DC2626)
+                .fillColor(0x22DC2626)
+                .zIndex(7f));
 
         BitmapDescriptor pinIcon = createStopPinDescriptor(currentWaypoint.getSequenceOrder());
         destinationMarker = googleMap.addMarker(new MarkerOptions()
@@ -576,6 +965,44 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
                 .icon(pinIcon)
                 .zIndex(15f)
                 .anchor(0.5f, 1.0f));
+
+        renderAllRouteStopMarkers();
+    }
+
+    /**
+     * Renderiza todas as demais paradas da rota no mapa (concluídas com check verde e próximas numeradas),
+     * proporcionando visão completa da jornada multi-paradas estilo Uber Driver.
+     */
+    private void renderAllRouteStopMarkers() {
+        if (googleMap == null) return;
+        for (Marker m : routeStopMarkers) {
+            m.remove();
+        }
+        routeStopMarkers.clear();
+
+        if (currentRoute == null || currentRoute.getWaypoints() == null) return;
+
+        for (Waypoint wp : currentRoute.getWaypoints()) {
+            if (currentWaypoint != null && wp.getDeliveryId() == currentWaypoint.getDeliveryId()) {
+                continue;
+            }
+            boolean hasCoords = wp.getLatitude() != 0.0 && wp.getLongitude() != 0.0
+                    && !(Math.abs(wp.getLatitude() - (-23.550520)) < 0.0001 && Math.abs(wp.getLongitude() - (-46.633308)) < 0.0001);
+            if (!hasCoords) continue;
+
+            LatLng pos = new LatLng(wp.getLatitude(), wp.getLongitude());
+            BitmapDescriptor icon = createSecondaryStopPinDescriptor(wp.getSequenceOrder(), wp.getStatus());
+            Marker m = googleMap.addMarker(new MarkerOptions()
+                    .position(pos)
+                    .title("Parada " + wp.getFormattedSequence())
+                    .snippet(wp.getFullAddress())
+                    .icon(icon)
+                    .zIndex(wp.isTerminal() ? 11f : 13f)
+                    .anchor(0.5f, 0.5f));
+            if (m != null) {
+                routeStopMarkers.add(m);
+            }
+        }
     }
 
     private void updateDriverMarker() {
@@ -592,9 +1019,40 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
                     .anchor(0.5f, 0.5f)
                     .rotation(currentAzimuth));
         } else {
-            driverMarker.setPosition(currentDriverLatLng);
-            driverMarker.setRotation(currentAzimuth);
+            animateDriverPuckTo(currentDriverLatLng, currentAzimuth);
         }
+    }
+
+    private void animateDriverPuckTo(final LatLng targetPos, final float targetBearing) {
+        if (driverMarker == null || targetPos == null) return;
+
+        final LatLng startPos = driverMarker.getPosition();
+        final float startBearing = driverMarker.getRotation();
+        if (startPos == null) {
+            driverMarker.setPosition(targetPos);
+            driverMarker.setRotation(targetBearing);
+            return;
+        }
+
+        if (puckAnimator != null && puckAnimator.isRunning()) {
+            puckAnimator.cancel();
+        }
+
+        float deltaAngle = ((targetBearing - startBearing + 540f) % 360f) - 180f;
+        final float normalizedDeltaAngle = deltaAngle;
+
+        puckAnimator = ValueAnimator.ofFloat(0f, 1f);
+        puckAnimator.setDuration(520L);
+        puckAnimator.addUpdateListener(anim -> {
+            if (driverMarker == null) return;
+            float f = (float) anim.getAnimatedValue();
+            double lat = startPos.latitude + (targetPos.latitude - startPos.latitude) * f;
+            double lng = startPos.longitude + (targetPos.longitude - startPos.longitude) * f;
+            float rot = (startBearing + normalizedDeltaAngle * f + 360f) % 360f;
+            driverMarker.setPosition(new LatLng(lat, lng));
+            driverMarker.setRotation(rot);
+        });
+        puckAnimator.start();
     }
 
     private void onDeviceOrientationChanged(float azimuth) {
@@ -607,14 +1065,104 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
 
     private void recenterOnDriver() {
         if (googleMap != null && currentDriverLatLng != null) {
+            isOverviewMode = false;
+            LatLng lookAheadTarget = computeOffsetLatLng(currentDriverLatLng, 45.0, currentAzimuth);
             CameraPosition cameraPosition = new CameraPosition.Builder()
-                    .target(currentDriverLatLng)
-                    .zoom(18.0f)
-                    .tilt(45.0f)
+                    .target(lookAheadTarget)
+                    .zoom(18.2f)
+                    .tilt(52.0f)
                     .bearing(currentAzimuth)
                     .build();
-            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 500, null);
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 550, null);
         }
+    }
+
+    /**
+     * Alterna entre a Câmera 3D de Perseguição (Uber Follow Mode) e a Visão Geral 2D da Rota Completa.
+     */
+    private void toggleRouteOverview() {
+        if (googleMap == null) return;
+
+        if (isOverviewMode) {
+            isOverviewMode = false;
+            isFollowingDriver = true;
+            updateMapPadding();
+            recenterOnDriver();
+            return;
+        }
+
+        isOverviewMode = true;
+        isFollowingDriver = false;
+        updateMapPadding();
+
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        int includedCount = 0;
+
+        if (currentDriverLatLng != null) {
+            builder.include(currentDriverLatLng);
+            includedCount++;
+        }
+        if (currentTargetLatLng != null) {
+            builder.include(currentTargetLatLng);
+            includedCount++;
+        }
+        if (currentRoutePoints != null) {
+            for (LatLng pt : currentRoutePoints) {
+                builder.include(pt);
+                includedCount++;
+            }
+        }
+        if (currentRoute != null && currentRoute.getWaypoints() != null) {
+            for (Waypoint wp : currentRoute.getWaypoints()) {
+                if (wp.getLatitude() != 0.0 && wp.getLongitude() != 0.0
+                        && !(Math.abs(wp.getLatitude() - (-23.550520)) < 0.0001 && Math.abs(wp.getLongitude() - (-46.633308)) < 0.0001)) {
+                    builder.include(new LatLng(wp.getLatitude(), wp.getLongitude()));
+                    includedCount++;
+                }
+            }
+        }
+
+        if (includedCount >= 2) {
+            try {
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), dpToPx(48)), 600, null);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    private LatLng computeOffsetLatLng(LatLng from, double distanceMeters, float bearingDegrees) {
+        if (from == null || distanceMeters <= 0.0) return from;
+        double earthRadius = 6371009.0;
+        double distRad = distanceMeters / earthRadius;
+        double bearingRad = Math.toRadians(bearingDegrees);
+        double lat1 = Math.toRadians(from.latitude);
+        double lng1 = Math.toRadians(from.longitude);
+
+        double sinLat1 = Math.sin(lat1);
+        double cosLat1 = Math.cos(lat1);
+        double sinDist = Math.sin(distRad);
+        double cosDist = Math.cos(distRad);
+
+        double sinLat2 = sinLat1 * cosDist + cosLat1 * sinDist * Math.cos(bearingRad);
+        double lat2 = Math.asin(sinLat2);
+        double y = Math.sin(bearingRad) * sinDist * cosLat1;
+        double x = cosDist - sinLat1 * sinLat2;
+        double lng2 = lng1 + Math.atan2(y, x);
+
+        return new LatLng(Math.toDegrees(lat2), Math.toDegrees(lng2));
+    }
+
+    private float computeBearingBetween(LatLng from, LatLng to) {
+        if (from == null || to == null) return currentAzimuth;
+        double lat1 = Math.toRadians(from.latitude);
+        double lng1 = Math.toRadians(from.longitude);
+        double lat2 = Math.toRadians(to.latitude);
+        double lng2 = Math.toRadians(to.longitude);
+        double dLng = lng2 - lng1;
+        double y = Math.sin(dLng) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+        double brng = Math.toDegrees(Math.atan2(y, x));
+        return (float) ((brng + 360.0) % 360.0);
     }
 
     private void requestLocationUpdates() {
@@ -689,13 +1237,21 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
 
         currentDriverLatLng = new LatLng(location.getLatitude(), location.getLongitude());
 
+        if (tvCurrentSpeed != null) {
+            int speedKmh = location.hasSpeed() ? Math.max(0, Math.round(location.getSpeed() * 3.6f)) : 0;
+            tvCurrentSpeed.setText(String.valueOf(speedKmh));
+        }
+
         if (location.hasBearing() && location.getSpeed() > 0.5f) {
             currentAzimuth = location.getBearing();
         }
 
-        updateDriverMarker();
-
-        if (currentTargetLatLng != null) {
+        // 1. Se a rota já está traçada, recorta a Polyline a partir do ponto do motorista (Uber Polyline Trimming),
+        //    faz o Road Snapping do puck na via e atualiza o progresso Turn-by-Turn
+        if (currentRoutePoints != null && currentRoutePoints.size() >= 2) {
+            trimPolylineToDriverPosition(currentDriverLatLng);
+            updateTurnByTurnProgress(currentDriverLatLng);
+        } else if (currentTargetLatLng != null) {
             float[] results = new float[1];
             Location.distanceBetween(
                     location.getLatitude(), location.getLongitude(),
@@ -705,6 +1261,9 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
             updateNavigationEtaUi(results[0]);
         }
 
+        updateDriverMarker();
+
+        // 2. Verifica se o motorista desviou da rota (> 40m fora da Polyline) para recalcular (Rerouting)
         checkAndRecalculateRouteIfNeeded();
 
         if (isFollowingDriver) {
@@ -712,35 +1271,33 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         }
     }
 
+    /**
+     * Verifica se não há rota traçada ou se o motorista saiu da rota planejada (> 40m de desvio perpendicular).
+     * Evita recálculos desnecessários quando o motorista está seguindo normalmente a linha azul.
+     */
     private void checkAndRecalculateRouteIfNeeded() {
         if (currentDriverLatLng == null || currentTargetLatLng == null) return;
 
         long now = System.currentTimeMillis();
-        boolean forceRecalculate = false;
+        boolean shouldRecalculate = false;
 
-        if (routePolyline == null || currentRoutePoints == null || currentRoutePoints.isEmpty()) {
-            forceRecalculate = true;
-        } else if (lastRouteOrigin != null) {
-            float[] distMoved = new float[1];
-            Location.distanceBetween(
-                    lastRouteOrigin.latitude, lastRouteOrigin.longitude,
-                    currentDriverLatLng.latitude, currentDriverLatLng.longitude,
-                    distMoved
-            );
-            // Se o motorista se deslocou mais de 35 metros desde a última rota gerada E já se passaram ao menos 5s
-            if (distMoved[0] > 35f && (now - lastRouteCalculationTime > 5000)) {
-                forceRecalculate = true;
+        if (routePolyline == null || currentRoutePoints == null || currentRoutePoints.size() < 2) {
+            shouldRecalculate = true;
+        } else if (now - lastRouteCalculationTime > 6000) {
+            double distFromRouteMeters = minDistanceToPolylineMeters(currentDriverLatLng, currentRoutePoints);
+            if (distFromRouteMeters > 40.0) {
+                shouldRecalculate = true;
             }
         }
 
-        if (forceRecalculate) {
+        if (shouldRecalculate) {
             calculateAndRenderRoute(currentDriverLatLng, currentTargetLatLng);
         }
     }
 
     /**
-     * Calcula a rota rodoviária curva a curva entre a localização atual do aparelho e a parada ativa,
-     * utilizando o motor OSRM com cabeçalho de aplicação correto e manobras ativas (estilo Google Maps / Waze).
+     * Calcula a rota rodoviária curva a curva entre a localização atual do motorista e o endereço da parada,
+     * extraindo todos os Steps (manobras, coordenadas de curva, distâncias e nomes de vias) no padrão Uber Directions.
      */
     private void calculateAndRenderRoute(LatLng start, LatLng end) {
         if (start == null || end == null) return;
@@ -761,7 +1318,7 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         httpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                runOnUiThread(() -> renderDirectFallbackLine(start, end));
+                fetchOrbiApiDirectionsOrFallback(start, end);
             }
 
             @Override
@@ -785,87 +1342,391 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
                                 points.add(new LatLng(coord.getDouble(1), coord.getDouble(0)));
                             }
 
-                            // Extração de manobras para o banner estilo Uber / Google Maps
                             JSONArray legs = first.optJSONArray("legs");
-                            ManeuverInfo nextManeuver = null;
+                            List<RouteStep> parsedSteps = new ArrayList<>();
                             if (legs != null && legs.length() > 0) {
-                                JSONArray steps = legs.getJSONObject(0).optJSONArray("steps");
-                                nextManeuver = parseNextManeuver(steps);
+                                JSONArray stepsJson = legs.getJSONObject(0).optJSONArray("steps");
+                                parsedSteps = parseRouteSteps(stepsJson, end);
                             }
-                            final ManeuverInfo maneuver = nextManeuver;
+                            final List<RouteStep> finalSteps = parsedSteps;
 
                             runOnUiThread(() -> {
+                                currentRouteTotalDistanceMeters = distanceMeters;
+                                currentRouteTotalDurationSeconds = durationSec;
                                 currentRoutePoints = points;
+                                currentRouteSteps.clear();
+                                currentRouteSteps.addAll(finalSteps);
+                                currentStepIndex = (currentRouteSteps.size() > 1 && "depart".equalsIgnoreCase(currentRouteSteps.get(0).type)) ? 1 : 0;
+
                                 drawSolidPolyline(points);
-                                updateMetrics(distanceMeters, durationSec);
-                                if (maneuver != null) {
-                                    applyManeuverToUi(maneuver);
-                                }
+                                updateBottomSheetMetrics(distanceMeters, durationSec);
+                                updateTurnByTurnProgress(currentDriverLatLng != null ? currentDriverLatLng : start);
                             });
                             return;
                         }
                     } catch (Exception ignored) {
                     }
                 }
-                runOnUiThread(() -> renderDirectFallbackLine(start, end));
+                fetchOrbiApiDirectionsOrFallback(start, end);
             }
         });
     }
 
-    private static class ManeuverInfo {
+    /**
+     * Fallback secundário consultando GET /api/route/{id}/directions na Orbi API antes de usar linha direta.
+     */
+    private void fetchOrbiApiDirectionsOrFallback(LatLng start, LatLng end) {
+        if (routeId == null) {
+            runOnUiThread(() -> renderDirectFallbackLine(start, end));
+            return;
+        }
+        repository.fetchRouteDirections(this, routeId, new RepositoryCallback<DirectionsResponseDto>() {
+            @Override
+            public void onSuccess(DirectionsResponseDto dto) {
+                GeometryDto geo = dto != null ? dto.getGeometry() : null;
+                if (geo != null && geo.getCoordinates() != null && geo.getCoordinates().size() >= 2) {
+                    List<LatLng> apiPoints = new ArrayList<>();
+                    for (List<Double> coord : geo.getCoordinates()) {
+                        if (coord != null && coord.size() >= 2) {
+                            apiPoints.add(new LatLng(coord.get(1), coord.get(0)));
+                        }
+                    }
+                    if (apiPoints.size() >= 2) {
+                        currentRouteTotalDistanceMeters = dto.getDistanceMeters() > 0 ? dto.getDistanceMeters() : computePolylineLengthMeters(apiPoints);
+                        currentRouteTotalDurationSeconds = dto.getDurationSeconds() > 0 ? dto.getDurationSeconds() : (currentRouteTotalDistanceMeters / 9.5);
+                        currentRoutePoints = apiPoints;
+                        currentRouteSteps.clear();
+                        if (dto.getSegments() != null) {
+                            for (SegmentDto seg : dto.getSegments()) {
+                                if (seg.getSteps() != null) {
+                                    for (StepDto s : seg.getSteps()) {
+                                        RouteStep rs = new RouteStep();
+                                        rs.streetName = s.getName() != null ? s.getName() : "";
+                                        rs.instruction = !TextUtils.isEmpty(s.getInstruction()) ? s.getInstruction() : getString(R.string.nav_maneuver_follow);
+                                        rs.distanceMeters = s.getDistanceMeters();
+                                        rs.durationSeconds = s.getDurationSeconds();
+                                        rs.iconRes = resolveIconForInstruction(rs.instruction);
+                                        rs.location = end;
+                                        currentRouteSteps.add(rs);
+                                    }
+                                }
+                            }
+                        }
+                        currentStepIndex = 0;
+                        drawSolidPolyline(apiPoints);
+                        updateBottomSheetMetrics(currentRouteTotalDistanceMeters, currentRouteTotalDurationSeconds);
+                        updateTurnByTurnProgress(currentDriverLatLng != null ? currentDriverLatLng : start);
+                        return;
+                    }
+                }
+                renderDirectFallbackLine(start, end);
+            }
+
+            @Override
+            public void onError(String message) {
+                renderDirectFallbackLine(start, end);
+            }
+        });
+    }
+
+    private static class RouteStep {
         String instruction;
+        String streetName;
         String modifier;
         String type;
         double distanceMeters;
+        double durationSeconds;
         int iconRes;
+        LatLng location;
     }
 
-    private ManeuverInfo parseNextManeuver(JSONArray steps) {
-        if (steps == null || steps.length() == 0) return null;
-        try {
-            int index = (steps.length() > 1) ? 1 : 0;
-            JSONObject step = steps.getJSONObject(index);
-            JSONObject maneuver = step.optJSONObject("maneuver");
-            String streetName = step.optString("name", "");
-            double stepDist = step.optDouble("distance", 0.0);
+    private List<RouteStep> parseRouteSteps(JSONArray steps, LatLng destinationFallback) {
+        List<RouteStep> result = new ArrayList<>();
+        if (steps == null || steps.length() == 0) return result;
 
-            ManeuverInfo info = new ManeuverInfo();
-            info.distanceMeters = stepDist;
-            info.type = maneuver != null ? maneuver.optString("type", "turn") : "turn";
-            info.modifier = maneuver != null ? maneuver.optString("modifier", "straight") : "straight";
+        for (int i = 0; i < steps.length(); i++) {
+            try {
+                JSONObject step = steps.getJSONObject(i);
+                JSONObject maneuver = step.optJSONObject("maneuver");
+                String streetName = step.optString("name", "");
+                double stepDist = step.optDouble("distance", 0.0);
+                double stepDur = step.optDouble("duration", 0.0);
 
-            if ("arrive".equalsIgnoreCase(info.type)) {
-                info.instruction = getString(R.string.nav_maneuver_arriving);
-                info.iconRes = R.drawable.ic_place;
-            } else if (info.modifier.contains("left")) {
-                info.instruction = TextUtils.isEmpty(streetName)
-                        ? "Vire à esquerda"
-                        : "Vire à esquerda na " + streetName;
-                info.iconRes = R.drawable.ic_turn_left;
-            } else if (info.modifier.contains("right")) {
-                info.instruction = TextUtils.isEmpty(streetName)
-                        ? "Vire à direita"
-                        : "Vire à direita na " + streetName;
-                info.iconRes = R.drawable.ic_turn_right;
-            } else {
-                info.instruction = TextUtils.isEmpty(streetName)
-                        ? getString(R.string.nav_maneuver_follow)
-                        : "Siga em frente na " + streetName;
-                info.iconRes = R.drawable.ic_turn_straight;
+                RouteStep info = new RouteStep();
+                info.streetName = streetName;
+                info.distanceMeters = stepDist;
+                info.durationSeconds = stepDur;
+                info.type = maneuver != null ? maneuver.optString("type", "turn") : "turn";
+                info.modifier = maneuver != null ? maneuver.optString("modifier", "straight") : "straight";
+
+                if (maneuver != null && maneuver.optJSONArray("location") != null) {
+                    JSONArray locArr = maneuver.getJSONArray("location");
+                    if (locArr.length() >= 2) {
+                        info.location = new LatLng(locArr.getDouble(1), locArr.getDouble(0));
+                    }
+                }
+                if (info.location == null) {
+                    info.location = destinationFallback;
+                }
+
+                buildStepInstructionAndIcon(info);
+                result.add(info);
+            } catch (Exception ignored) {
             }
-            return info;
-        } catch (Exception e) {
-            return null;
+        }
+        return result;
+    }
+
+    private void buildStepInstructionAndIcon(RouteStep info) {
+        String street = info.streetName;
+        boolean hasStreet = !TextUtils.isEmpty(street);
+
+        if ("arrive".equalsIgnoreCase(info.type)) {
+            info.instruction = getString(R.string.nav_maneuver_arriving);
+            info.iconRes = R.drawable.ic_place;
+        } else if ("roundabout".equalsIgnoreCase(info.type) || "rotary".equalsIgnoreCase(info.type)) {
+            info.instruction = hasStreet ? "Na rotatória, pegue a saída para " + street : "Pegue a saída na rotatória";
+            info.iconRes = info.modifier.contains("left") ? R.drawable.ic_turn_left : R.drawable.ic_turn_right;
+        } else if (info.modifier.contains("uturn")) {
+            info.instruction = hasStreet ? "Faça o retorno na " + street : "Faça o retorno logo à frente";
+            info.iconRes = R.drawable.ic_turn_left;
+        } else if (info.modifier.contains("slight left")) {
+            info.instruction = hasStreet ? "Mantenha-se à esquerda na " + street : "Mantenha-se à esquerda";
+            info.iconRes = R.drawable.ic_turn_left;
+        } else if (info.modifier.contains("slight right")) {
+            info.instruction = hasStreet ? "Mantenha-se à direita na " + street : "Mantenha-se à direita";
+            info.iconRes = R.drawable.ic_turn_right;
+        } else if (info.modifier.contains("left")) {
+            info.instruction = hasStreet ? "Vire à esquerda na " + street : "Vire à esquerda";
+            info.iconRes = R.drawable.ic_turn_left;
+        } else if (info.modifier.contains("right")) {
+            info.instruction = hasStreet ? "Vire à direita na " + street : "Vire à direita";
+            info.iconRes = R.drawable.ic_turn_right;
+        } else {
+            info.instruction = hasStreet ? "Siga em frente na " + street : getString(R.string.nav_maneuver_follow);
+            info.iconRes = R.drawable.ic_turn_straight;
         }
     }
 
-    private void applyManeuverToUi(ManeuverInfo maneuver) {
-        if (tvManeuverInstruction != null && !TextUtils.isEmpty(maneuver.instruction)) {
-            tvManeuverInstruction.setText(maneuver.instruction);
+    private int resolveIconForInstruction(String instruction) {
+        if (instruction == null) return R.drawable.ic_turn_straight;
+        String lower = instruction.toLowerCase(Locale.ROOT);
+        if (lower.contains("esquerda") || lower.contains("left")) return R.drawable.ic_turn_left;
+        if (lower.contains("direita") || lower.contains("right")) return R.drawable.ic_turn_right;
+        if (lower.contains("cheg") || lower.contains("destin") || lower.contains("arrive")) return R.drawable.ic_place;
+        return R.drawable.ic_turn_straight;
+    }
+
+    /**
+     * Projeta a coordenada GPS do motorista no segmento mais próximo da Polyline e recorta os pontos
+     * já ultrapassados (Uber Polyline Trimming), atualizando também a distância rodoviária restante.
+     */
+    private void trimPolylineToDriverPosition(LatLng driverPos) {
+        if (driverPos == null || currentRoutePoints == null || currentRoutePoints.size() < 2) return;
+
+        int closestSegmentIndex = 0;
+        double minDistanceSq = Double.MAX_VALUE;
+        LatLng bestProjectedPoint = currentRoutePoints.get(0);
+
+        for (int i = 0; i < currentRoutePoints.size() - 1; i++) {
+            LatLng a = currentRoutePoints.get(i);
+            LatLng b = currentRoutePoints.get(i + 1);
+            LatLng projected = projectPointOnSegment(driverPos, a, b);
+            double dLat = driverPos.latitude - projected.latitude;
+            double dLng = driverPos.longitude - projected.longitude;
+            double distSq = dLat * dLat + dLng * dLng;
+            if (distSq < minDistanceSq) {
+                minDistanceSq = distSq;
+                closestSegmentIndex = i;
+                bestProjectedPoint = projected;
+            }
         }
-        if (ivManeuverIcon != null && maneuver.iconRes != 0) {
-            ivManeuverIcon.setImageResource(maneuver.iconRes);
+
+        List<LatLng> trimmedPoints = new ArrayList<>(currentRoutePoints.size() - closestSegmentIndex + 1);
+        trimmedPoints.add(bestProjectedPoint);
+        for (int i = closestSegmentIndex + 1; i < currentRoutePoints.size(); i++) {
+            trimmedPoints.add(currentRoutePoints.get(i));
         }
+
+        // Uber Road-Snapping: se o motorista está a menos de 25m da linha da rua, crava o puck sobre a via
+        // e alinha o rumo da câmera/seta com a tangente do segmento rodoviário
+        float[] snapDist = new float[1];
+        Location.distanceBetween(
+                driverPos.latitude, driverPos.longitude,
+                bestProjectedPoint.latitude, bestProjectedPoint.longitude,
+                snapDist
+        );
+        if (snapDist[0] < 25f) {
+            currentDriverLatLng = bestProjectedPoint;
+            if (trimmedPoints.size() >= 2) {
+                LatLng nextPt = trimmedPoints.get(1);
+                float[] segLen = new float[1];
+                Location.distanceBetween(bestProjectedPoint.latitude, bestProjectedPoint.longitude,
+                        nextPt.latitude, nextPt.longitude, segLen);
+                if (segLen[0] > 1.5f) {
+                    currentAzimuth = computeBearingBetween(bestProjectedPoint, nextPt);
+                }
+            }
+        }
+
+        currentRoutePoints = trimmedPoints;
+        if (routePolyline != null && routePolylineCasing != null) {
+            routePolylineCasing.setPoints(trimmedPoints);
+            routePolyline.setPoints(trimmedPoints);
+        } else {
+            drawSolidPolyline(trimmedPoints);
+        }
+
+        double remainingRoadMeters = computePolylineLengthMeters(trimmedPoints);
+        double remainingDurationSec;
+        if (currentRouteTotalDistanceMeters > 10.0 && currentRouteTotalDurationSeconds > 0.0) {
+            remainingDurationSec = currentRouteTotalDurationSeconds * (remainingRoadMeters / currentRouteTotalDistanceMeters);
+        } else {
+            remainingDurationSec = (remainingRoadMeters / 9.7); // ~35 km/h urbano
+        }
+        updateBottomSheetMetrics(remainingRoadMeters, remainingDurationSec);
+    }
+
+    /**
+     * Atualiza o Banner Superior Turn-by-Turn de acordo com a distância real até a próxima esquina/manobra,
+     * avançando automaticamente de Step quando o motorista cruza a conversão (< 28m) e exibindo a faixa "A seguir".
+     */
+    private void updateTurnByTurnProgress(LatLng driverPos) {
+        if (driverPos == null) return;
+
+        if (currentRouteSteps.isEmpty()) {
+            if (layoutNextManeuver != null) {
+                layoutNextManeuver.setVisibility(View.GONE);
+            }
+            if (currentTargetLatLng != null) {
+                float[] d = new float[1];
+                Location.distanceBetween(driverPos.latitude, driverPos.longitude,
+                        currentTargetLatLng.latitude, currentTargetLatLng.longitude, d);
+                tvManeuverDistance.setText(formatStepDistance(d[0]));
+                if (d[0] < 120f) {
+                    tvManeuverInstruction.setText(R.string.nav_maneuver_arriving);
+                    ivManeuverIcon.setImageResource(R.drawable.ic_place);
+                } else {
+                    tvManeuverInstruction.setText(R.string.nav_maneuver_follow);
+                    ivManeuverIcon.setImageResource(R.drawable.ic_turn_straight);
+                }
+            }
+            return;
+        }
+
+        if (currentStepIndex >= currentRouteSteps.size()) {
+            currentStepIndex = currentRouteSteps.size() - 1;
+        }
+
+        RouteStep activeStep = currentRouteSteps.get(currentStepIndex);
+        float[] distToStep = new float[1];
+        if (activeStep.location != null) {
+            Location.distanceBetween(
+                    driverPos.latitude, driverPos.longitude,
+                    activeStep.location.latitude, activeStep.location.longitude,
+                    distToStep
+            );
+        } else {
+            distToStep[0] = (float) activeStep.distanceMeters;
+        }
+
+        // Se o motorista já chegou na esquina da manobra atual (< 28m), avança para a próxima manobra
+        if (distToStep[0] < 28f && currentStepIndex < currentRouteSteps.size() - 1) {
+            currentStepIndex++;
+            activeStep = currentRouteSteps.get(currentStepIndex);
+            if (activeStep.location != null) {
+                Location.distanceBetween(
+                        driverPos.latitude, driverPos.longitude,
+                        activeStep.location.latitude, activeStep.location.longitude,
+                        distToStep
+                );
+            }
+        }
+
+        double displayDist = distToStep[0] > 5f ? distToStep[0] : activeStep.distanceMeters;
+        tvManeuverDistance.setText(formatStepDistance(displayDist));
+
+        if (!TextUtils.isEmpty(activeStep.instruction)) {
+            tvManeuverInstruction.setText(activeStep.instruction);
+        }
+        if (activeStep.iconRes != 0) {
+            ivManeuverIcon.setImageResource(activeStep.iconRes);
+        }
+
+        // Faixa secundária "A seguir" (Uber Stacked Next Maneuver)
+        if (layoutNextManeuver != null) {
+            if (currentStepIndex + 1 < currentRouteSteps.size()) {
+                RouteStep nextStep = currentRouteSteps.get(currentStepIndex + 1);
+                layoutNextManeuver.setVisibility(View.VISIBLE);
+                if (ivNextManeuverIcon != null && nextStep.iconRes != 0) {
+                    ivNextManeuverIcon.setImageResource(nextStep.iconRes);
+                }
+                if (tvNextManeuverInstruction != null && !TextUtils.isEmpty(nextStep.instruction)) {
+                    tvNextManeuverInstruction.setText(nextStep.instruction);
+                }
+            } else {
+                layoutNextManeuver.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private String formatStepDistance(double meters) {
+        if (meters < 1000.0) {
+            int rounded = Math.max(10, (int) (Math.round(meters / 10.0) * 10));
+            return String.format(Locale.getDefault(), "Em %d m", rounded);
+        }
+        return String.format(Locale.getDefault(), "Em %.1f km", meters / 1000.0);
+    }
+
+    private LatLng projectPointOnSegment(LatLng p, LatLng a, LatLng b) {
+        double ax = a.longitude;
+        double ay = a.latitude;
+        double bx = b.longitude;
+        double by = b.latitude;
+        double px = p.longitude;
+        double py = p.latitude;
+
+        double dx = bx - ax;
+        double dy = by - ay;
+        double lenSq = dx * dx + dy * dy;
+        if (lenSq < 1e-12) return a;
+
+        double t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+        t = Math.max(0.0, Math.min(1.0, t));
+        return new LatLng(ay + t * dy, ax + t * dx);
+    }
+
+    private double minDistanceToPolylineMeters(LatLng p, List<LatLng> polyline) {
+        if (p == null || polyline == null || polyline.isEmpty()) return Double.MAX_VALUE;
+        if (polyline.size() == 1) {
+            float[] r = new float[1];
+            Location.distanceBetween(p.latitude, p.longitude, polyline.get(0).latitude, polyline.get(0).longitude, r);
+            return r[0];
+        }
+
+        double minMeters = Double.MAX_VALUE;
+        float[] res = new float[1];
+        for (int i = 0; i < polyline.size() - 1; i++) {
+            LatLng proj = projectPointOnSegment(p, polyline.get(i), polyline.get(i + 1));
+            Location.distanceBetween(p.latitude, p.longitude, proj.latitude, proj.longitude, res);
+            if (res[0] < minMeters) {
+                minMeters = res[0];
+            }
+        }
+        return minMeters;
+    }
+
+    private double computePolylineLengthMeters(List<LatLng> points) {
+        if (points == null || points.size() < 2) return 0.0;
+        double total = 0.0;
+        float[] seg = new float[1];
+        for (int i = 0; i < points.size() - 1; i++) {
+            LatLng a = points.get(i);
+            LatLng b = points.get(i + 1);
+            Location.distanceBetween(a.latitude, a.longitude, b.latitude, b.longitude, seg);
+            total += seg[0];
+        }
+        return total;
     }
 
     private void renderDirectFallbackLine(LatLng start, LatLng end) {
@@ -873,6 +1734,7 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         directPoints.add(start);
         directPoints.add(end);
         currentRoutePoints = directPoints;
+        currentRouteSteps.clear();
         drawSolidPolyline(directPoints);
 
         float[] res = new float[1];
@@ -881,8 +1743,9 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     }
 
     /**
-     * Traça a rota com alto contraste estilo Google Maps Navigation:
-     * contorno azul-marinho escuro espesso (#0A2E70) + núcleo azul intenso (#1A73E8).
+     * Traça a rota com alto contraste estilo Uber Driver / Google Maps Navigation:
+     * contorno azul-marinho escuro espesso (#0A2E70) + núcleo azul intenso (#1A73E8)
+     * + linha pontilhada de calçada (curb line) do fim da via até o pino do endereço.
      */
     private void drawSolidPolyline(List<LatLng> points) {
         currentRoutePoints = points;
@@ -909,6 +1772,23 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
                 .jointType(JointType.ROUND)
                 .geodesic(true)
                 .zIndex(10));
+
+        // Linha pontilhada sutil da rua até a porta do endereço (estilo Uber Curb-to-Door)
+        LatLng lastRoadPoint = points.get(points.size() - 1);
+        if (currentTargetLatLng != null) {
+            float[] curbDist = new float[1];
+            Location.distanceBetween(lastRoadPoint.latitude, lastRoadPoint.longitude,
+                    currentTargetLatLng.latitude, currentTargetLatLng.longitude, curbDist);
+            if (curbDist[0] > 4f && curbDist[0] < 250f) {
+                List<PatternItem> dotPattern = Arrays.asList(new Dot(), new Gap(14f));
+                curbWalkingPolyline = googleMap.addPolyline(new PolylineOptions()
+                        .add(lastRoadPoint, currentTargetLatLng)
+                        .width(12f)
+                        .color(0xFF64748B)
+                        .pattern(dotPattern)
+                        .zIndex(8));
+            }
+        }
     }
 
     private void clearRoutePolyline() {
@@ -920,50 +1800,40 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
             routePolyline.remove();
             routePolyline = null;
         }
+        if (curbWalkingPolyline != null) {
+            curbWalkingPolyline.remove();
+            curbWalkingPolyline = null;
+        }
     }
 
-    private void updateMetrics(double distanceMeters, double durationSeconds) {
+    /**
+     * Atualiza exclusivamente as métricas do bloco inferior (Duração, Distância Total Restante e Horário de Chegada),
+     * sem sobrescrever a instrução ou distância da próxima manobra no banner superior.
+     */
+    private void updateBottomSheetMetrics(double distanceMeters, double durationSeconds) {
         double distKm = distanceMeters / 1000.0;
-        int durationMinutes = (int) Math.round(durationSeconds / 60.0);
-        if (durationMinutes <= 0) durationMinutes = 3;
+        int durationMinutes = (int) Math.max(1, Math.round(durationSeconds / 60.0));
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.MINUTE, durationMinutes);
         String arrivalTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(cal.getTime());
 
-        tvNavDistance.setText(String.format(Locale.getDefault(), "%.1f km", distKm));
+        if (distanceMeters < 1000.0) {
+            tvNavDistance.setText(String.format(Locale.getDefault(), "%d m", Math.max(10, (int) distanceMeters)));
+        } else {
+            tvNavDistance.setText(String.format(Locale.getDefault(), "%.1f km", distKm));
+        }
         tvNavDuration.setText(String.format(Locale.getDefault(), "%d min", durationMinutes));
         tvNavArrivalTime.setText(getString(R.string.nav_arrival_at, arrivalTime));
-
-        if (distKm < 1.0) {
-            tvManeuverDistance.setText(String.format(Locale.getDefault(), "Em %d m", (int) distanceMeters));
-        } else {
-            tvManeuverDistance.setText(String.format(Locale.getDefault(), "Em %.1f km", distKm));
-        }
-
-        if (distanceMeters < 150) {
-            tvManeuverInstruction.setText(R.string.nav_maneuver_arriving);
-        } else {
-            tvManeuverInstruction.setText(getString(R.string.nav_maneuver_follow));
-        }
     }
 
     private void updateNavigationEtaUi(float distMeters) {
         double distKm = distMeters / 1000.0;
-        int min = (int) Math.max(2, Math.round((distKm / 35.0) * 60.0));
+        double durationSec = (distKm / 35.0) * 3600.0;
+        updateBottomSheetMetrics(distMeters, durationSec);
 
-        Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.MINUTE, min);
-        String arrivalTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(cal.getTime());
-
-        tvNavDistance.setText(String.format(Locale.getDefault(), "%.1f km", distKm));
-        tvNavDuration.setText(String.format(Locale.getDefault(), "%d min", min));
-        tvNavArrivalTime.setText(getString(R.string.nav_arrival_at, arrivalTime));
-
-        if (distKm < 1.0) {
-            tvManeuverDistance.setText(String.format(Locale.getDefault(), "Em %d m", (int) distMeters));
-        } else {
-            tvManeuverDistance.setText(String.format(Locale.getDefault(), "Em %.1f km", distKm));
+        if (currentRouteSteps.isEmpty()) {
+            tvManeuverDistance.setText(formatStepDistance(distMeters));
         }
     }
 
@@ -1075,81 +1945,88 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         return BitmapDescriptorFactory.fromBitmap(bitmap);
     }
 
-    private void handleCompleteStop() {
+    /**
+     * Desenha pinos circulares numerados compactos estilo Uber Multi-Stop para as demais paradas da rota:
+     * - Pendentes seguintes: azul-marinho escuro (#0F172A) com borda branca
+     * - Concluídas: verde (#16A34A)
+     * - Puladas/Canceladas: cinza (#64748B)
+     */
+    private BitmapDescriptor createSecondaryStopPinDescriptor(int sequence, WaypointStatus status) {
+        int size = 68;
+        Bitmap bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+
+        float center = size / 2f;
+        float radius = 26f;
+
+        Paint shadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        shadowPaint.setColor(0x33000000);
+        canvas.drawCircle(center, center + 2f, radius + 2f, shadowPaint);
+
+        Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        if (status == WaypointStatus.DELIVERED) {
+            fillPaint.setColor(0xFF16A34A); // Verde concluído
+        } else if (status == WaypointStatus.SKIPPED || status == WaypointStatus.CANCELLED) {
+            fillPaint.setColor(0xFF64748B); // Cinza pulado/cancelado
+        } else {
+            fillPaint.setColor(0xFF0F172A); // Azul-marinho Uber para próximas paradas
+        }
+        fillPaint.setStyle(Paint.Style.FILL);
+        canvas.drawCircle(center, center, radius, fillPaint);
+
+        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        borderPaint.setColor(Color.WHITE);
+        borderPaint.setStyle(Paint.Style.STROKE);
+        borderPaint.setStrokeWidth(4f);
+        canvas.drawCircle(center, center, radius, borderPaint);
+
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextSize(22f);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setFakeBoldText(true);
+
+        Paint.FontMetrics fm = textPaint.getFontMetrics();
+        float textY = center - (fm.ascent + fm.descent) / 2f;
+        canvas.drawText(String.valueOf(sequence), center, textY, textPaint);
+
+        return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    private void handleConcludeStop() {
         if (currentWaypoint == null) return;
-
         long deliveryId = currentWaypoint.getDeliveryId();
-        boolean wasAtPickup = currentWaypoint.isAtPickup();
 
-        repository.advanceDelivery(this, routeId, deliveryId, new RepositoryCallback<Boolean>() {
+        repository.completeDelivery(this, routeId, deliveryId, new RepositoryCallback<Boolean>() {
             @Override
             public void onSuccess(Boolean result) {
-                if (wasAtPickup) {
-                    Toast.makeText(NavigationMapActivity.this, R.string.stop_pickup_confirmed, Toast.LENGTH_SHORT).show();
-                    // Agora a parada está em trânsito; atualiza cockpit e traçado para o endereço de entrega
-                    loadCurrentNavigationTarget();
-                } else {
-                    Toast.makeText(NavigationMapActivity.this, R.string.stop_completed, Toast.LENGTH_SHORT).show();
-                    checkNextOrFinish();
-                }
+                currentWaypoint.setStatus(WaypointStatus.DELIVERED);
+                currentWaypoint.setCompletedAt(System.currentTimeMillis());
+                Toast.makeText(NavigationMapActivity.this, R.string.stop_completed, Toast.LENGTH_SHORT).show();
+                checkNextOrFinish();
             }
 
             @Override
             public void onError(String message) {
+                if (slideConcludeDelivery != null) {
+                    slideConcludeDelivery.resetSmoothly();
+                }
                 Toast.makeText(NavigationMapActivity.this, message, Toast.LENGTH_SHORT).show();
-                checkNextOrFinish();
             }
         });
     }
 
     private void handleSkipStop() {
         if (currentWaypoint == null) return;
-        showSkipOptionsDialog();
+        showReasonDialog(false, currentWaypoint.getDeliveryId());
     }
 
-    private void showSkipOptionsDialog() {
+    private void handleCancelStop() {
         if (currentWaypoint == null) return;
-        final long deliveryId = currentWaypoint.getDeliveryId();
-
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_skip_options, null);
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogView)
-                .setCancelable(true)
-                .create();
-
-        View cardPostponeQueue = dialogView.findViewById(R.id.cardPostponeQueue);
-        View cardCancelDelivery = dialogView.findViewById(R.id.cardCancelDelivery);
-        View btnSkipDismiss = dialogView.findViewById(R.id.btnSkipDismiss);
-
-        cardPostponeQueue.setOnClickListener(v -> {
-            dialog.dismiss();
-            repository.postponeDelivery(NavigationMapActivity.this, routeId, deliveryId, new RepositoryCallback<Boolean>() {
-                @Override
-                public void onSuccess(Boolean result) {
-                    Toast.makeText(NavigationMapActivity.this, R.string.stop_postponed, Toast.LENGTH_SHORT).show();
-                    clearRoutePolyline();
-                    currentRoutePoints = null;
-                    lastRouteOrigin = null;
-                    checkNextOrFinish();
-                }
-
-                @Override
-                public void onError(String message) {
-                    Toast.makeText(NavigationMapActivity.this, message, Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
-
-        cardCancelDelivery.setOnClickListener(v -> {
-            dialog.dismiss();
-            showCancelJustificationDialog(deliveryId);
-        });
-
-        btnSkipDismiss.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
+        showReasonDialog(true, currentWaypoint.getDeliveryId());
     }
 
-    private void showCancelJustificationDialog(long deliveryId) {
+    private void showReasonDialog(boolean isCancel, long deliveryId) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_justification, null);
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogView)
@@ -1168,15 +2045,29 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         MaterialButton btnDialogCancel = dialogView.findViewById(R.id.btnDialogCancel);
         MaterialButton btnDialogConfirm = dialogView.findViewById(R.id.btnDialogConfirm);
 
-        tvDialogTitle.setText(R.string.dialog_cancel_title);
-        tvDialogSubtitle.setText(R.string.dialog_cancel_subtitle);
-        rbReason1.setText(R.string.reason_customer_cancelled);
-        rbReason2.setText(R.string.reason_address_not_found);
-        rbReason3.setText(R.string.reason_damaged_cargo);
-        rbReason4.setText(R.string.reason_other);
-        btnDialogConfirm.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.status_cancelled));
+        if (isCancel) {
+            tvDialogTitle.setText(R.string.dialog_cancel_title);
+            tvDialogSubtitle.setText(R.string.dialog_cancel_subtitle);
+            rbReason1.setText(R.string.reason_customer_cancelled);
+            rbReason2.setText(R.string.reason_address_not_found);
+            rbReason3.setText(R.string.reason_damaged_cargo);
+            rbReason4.setText(R.string.reason_other);
+            btnDialogConfirm.setText(R.string.btn_confirm_cancel);
+            btnDialogConfirm.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.nav_action_cancel));
+        } else {
+            tvDialogTitle.setText(R.string.dialog_skip_title);
+            tvDialogSubtitle.setText(R.string.dialog_skip_subtitle);
+            rbReason1.setText(R.string.reason_recipient_absent);
+            rbReason2.setText(R.string.reason_blocked_road);
+            rbReason3.setText(R.string.reason_business_closed);
+            rbReason4.setText(R.string.reason_other);
+            btnDialogConfirm.setText(R.string.btn_confirm_skip);
+            btnDialogConfirm.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.nav_action_skip));
+        }
 
+        btnDialogConfirm.setEnabled(false);
         rgReasons.setOnCheckedChangeListener((group, checkedId) -> {
+            btnDialogConfirm.setEnabled(checkedId != -1);
             tilOtherReason.setVisibility(checkedId == R.id.rbReason4 ? View.VISIBLE : View.GONE);
         });
 
@@ -1201,19 +2092,41 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
 
             dialog.dismiss();
 
-            repository.cancelDelivery(NavigationMapActivity.this, routeId, deliveryId, justification, new RepositoryCallback<Boolean>() {
-                @Override
-                public void onSuccess(Boolean result) {
-                    Toast.makeText(NavigationMapActivity.this, R.string.stop_cancelled, Toast.LENGTH_SHORT).show();
-                    checkNextOrFinish();
-                }
+            final String finalJustification = justification;
+            if (isCancel) {
+                repository.cancelDelivery(NavigationMapActivity.this, routeId, deliveryId, finalJustification, new RepositoryCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        currentWaypoint.setStatus(WaypointStatus.CANCELLED);
+                        currentWaypoint.setJustification(finalJustification);
+                        Toast.makeText(NavigationMapActivity.this, R.string.stop_cancelled, Toast.LENGTH_SHORT).show();
+                        checkNextOrFinish();
+                    }
 
-                @Override
-                public void onError(String message) {
-                    Toast.makeText(NavigationMapActivity.this, R.string.stop_cancelled_local, Toast.LENGTH_SHORT).show();
-                    checkNextOrFinish();
-                }
-            });
+                    @Override
+                    public void onError(String message) {
+                        currentWaypoint.setStatus(WaypointStatus.CANCELLED);
+                        currentWaypoint.setJustification(finalJustification);
+                        Toast.makeText(NavigationMapActivity.this, R.string.stop_cancelled_local, Toast.LENGTH_SHORT).show();
+                        checkNextOrFinish();
+                    }
+                });
+            } else {
+                repository.skipDelivery(NavigationMapActivity.this, routeId, deliveryId, finalJustification, new RepositoryCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        currentWaypoint.setStatus(WaypointStatus.SKIPPED);
+                        currentWaypoint.setJustification(finalJustification);
+                        Toast.makeText(NavigationMapActivity.this, R.string.stop_skipped, Toast.LENGTH_SHORT).show();
+                        checkNextOrFinish();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        Toast.makeText(NavigationMapActivity.this, message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         });
 
         dialog.show();
@@ -1229,6 +2142,9 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
             currentWaypoint = next;
             clearRoutePolyline();
             currentRoutePoints = null;
+            currentRouteSteps.clear();
+            currentStepIndex = 0;
+            currentTargetLatLng = null;
             lastRouteOrigin = null;
             loadCurrentNavigationTarget();
         } else {
@@ -1237,7 +2153,7 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     }
 
     private void handleAllStopsHandledOrNextRoute() {
-        repository.completeRoute(routeId);
+        repository.completeRoute(this, routeId);
 
         // Procura se há uma próxima rota ativa (pulando rotas já finalizadas)
         Route nextRoute = repository.getNextActiveRoute(routeId);
@@ -1245,9 +2161,12 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
             Toast.makeText(this, "Rota concluída! Iniciando próxima rota: " + nextRoute.getCode(), Toast.LENGTH_LONG).show();
             routeId = nextRoute.getId();
             currentRoute = nextRoute;
-            repository.startRoute(routeId);
+            repository.startRoute(this, routeId);
             clearRoutePolyline();
             currentRoutePoints = null;
+            currentRouteSteps.clear();
+            currentStepIndex = 0;
+            currentTargetLatLng = null;
             lastRouteOrigin = null;
             loadCurrentNavigationTarget();
         } else {

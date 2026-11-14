@@ -163,6 +163,14 @@ public class Waypoint implements Serializable {
         this.justification = justification;
     }
 
+    public String getDetails() {
+        return justification;
+    }
+
+    public void setDetails(String details) {
+        this.justification = details;
+    }
+
     public Long getCompletedAt() {
         return completedAt;
     }

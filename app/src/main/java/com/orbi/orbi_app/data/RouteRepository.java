@@ -7,6 +7,7 @@ import android.text.TextUtils;
 
 import com.orbi.orbi_app.data.remote.ApiClient;
 import com.orbi.orbi_app.data.remote.OrbiApiService;
+import com.orbi.orbi_app.data.remote.dto.DeliveryDetailsDto;
 import com.orbi.orbi_app.data.remote.dto.DeliveryDto;
 import com.orbi.orbi_app.data.remote.dto.DirectionsResponseDto;
 import com.orbi.orbi_app.data.remote.dto.RouteResponseDto;
@@ -26,6 +27,7 @@ public class RouteRepository {
     private static RouteRepository instance;
     private final List<Route> cachedRoutes = new ArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private boolean isUsingSampleData = true;
 
     private RouteRepository() {
         initSampleData();
@@ -38,7 +40,14 @@ public class RouteRepository {
         return instance;
     }
 
+    public synchronized void resetForNewSession() {
+        cachedRoutes.clear();
+        isUsingSampleData = false;
+    }
+
     private void initSampleData() {
+        cachedRoutes.clear();
+        isUsingSampleData = true;
         // Dados de resiliência e fallback alinhados com a Orbi API
         List<Waypoint> waypoints1 = new ArrayList<>();
         waypoints1.add(new Waypoint(1L, "1", 1, "Av. Paulista, 1578 - Bela Vista, São Paulo", -23.5614, -46.6559, WaypointStatus.IN_TRANSIT));
@@ -87,7 +96,11 @@ public class RouteRepository {
                     List<RouteResponseDto> dtos = response.body();
                     List<Route> convertedRoutes = new ArrayList<>();
 
-                    cachedRoutes.clear();
+                    if (isUsingSampleData) {
+                        cachedRoutes.clear();
+                        isUsingSampleData = false;
+                    }
+
                     for (RouteResponseDto dto : dtos) {
                         // Filtragem por motorista: exibe rotas atribuídas ao motorista ou não atribuídas se logado
                         if (!TextUtils.isEmpty(currentDriverUserId) && dto.getDriverInfo() != null) {
@@ -98,16 +111,29 @@ public class RouteRepository {
                         }
                         Route r = convertDtoToRoute(dto, context);
                         convertedRoutes.add(r);
-                        // Dispara busca das paradas reais em /api/deliveries/route/{routeId}
-                        fetchDeliveriesByRouteIdFromApi(context, r.getId(), null);
                     }
 
-                    if (!convertedRoutes.isEmpty()) {
-                        cachedRoutes.addAll(convertedRoutes);
-                    }
+                    cachedRoutes.clear();
+                    cachedRoutes.addAll(convertedRoutes);
 
                     if (callback != null) {
                         mainHandler.post(() -> callback.onSuccess(getRoutes(RouteStatus.ALL)));
+                    }
+
+                    // Busca as paradas reais de cada rota em /api/deliveries/route/{routeId}
+                    for (Route r : convertedRoutes) {
+                        fetchDeliveriesByRouteIdFromApi(context, r.getId(), new RepositoryCallback<List<Waypoint>>() {
+                            @Override
+                            public void onSuccess(List<Waypoint> waypoints) {
+                                if (callback != null) {
+                                    mainHandler.post(() -> callback.onSuccess(getRoutes(RouteStatus.ALL)));
+                                }
+                            }
+
+                            @Override
+                            public void onError(String message) {
+                            }
+                        });
                     }
                 } else {
                     String errorMsg = "Orbi API retornou erro HTTP " + response.code();
@@ -209,6 +235,18 @@ public class RouteRepository {
 
                     Route r = getRouteById(routeId);
                     if (r != null) {
+                        // Preserva estados terminais já atualizados localmente (apenas se não forem dados de exemplo)
+                        if (!isUsingSampleData && r.getWaypoints() != null) {
+                            for (Waypoint realWp : realWaypoints) {
+                                for (Waypoint localWp : r.getWaypoints()) {
+                                    if (localWp.getDeliveryId() == realWp.getDeliveryId() && localWp.isTerminal()) {
+                                        realWp.setStatus(localWp.getStatus());
+                                        realWp.setCompletedAt(localWp.getCompletedAt());
+                                        realWp.setJustification(localWp.getJustification());
+                                    }
+                                }
+                            }
+                        }
                         r.setWaypoints(realWaypoints);
                     }
 
@@ -264,6 +302,10 @@ public class RouteRepository {
                 wp.setRecipientName(d.getRecipientEmail());
             } else {
                 wp.setRecipientName("Parada " + order);
+            }
+
+            if (!TextUtils.isEmpty(d.getDetails())) {
+                wp.setJustification(d.getDetails());
             }
 
             // Se veio sem coordenadas reais e possui endereço textual, refina com geocoder em background
@@ -341,19 +383,112 @@ public class RouteRepository {
     }
 
     /**
+     * Conclui a entrega via PATCH /api/deliveries/{id}/delivered da Orbi API.
+     * Caso o ID local esteja dessincronizado (404 "Entrega não encontrada"), resolve o ID real
+     * via GET /api/deliveries/route/{routeId} e reexecuta a transição na API.
+     */
+    public void completeDelivery(Context context, String routeId, long deliveryId, RepositoryCallback<Boolean> callback) {
+        Route route = getRouteById(routeId);
+        Waypoint target = findTargetWaypoint(route, deliveryId);
+
+        final Waypoint finalTarget = target;
+        if (finalTarget != null) {
+            OrbiApiService service = ApiClient.getApiService(context);
+            executeCompleteDeliveryCall(context, service, routeId, route, finalTarget, finalTarget.getDeliveryId(), true, callback);
+        } else {
+            callback.onError("Parada não encontrada");
+        }
+    }
+
+    private void executeCompleteDeliveryCall(
+            Context context,
+            OrbiApiService service,
+            String routeId,
+            Route route,
+            Waypoint finalTarget,
+            long targetDeliveryId,
+            boolean allowResolveRetry,
+            RepositoryCallback<Boolean> callback
+    ) {
+        service.completeDelivery(targetDeliveryId).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    markWaypointDeliveredLocally(route, finalTarget);
+                    mainHandler.post(() -> callback.onSuccess(true));
+                } else if (allowResolveRetry && (response.code() == 404 || response.code() == 400)) {
+                    resolveRealDeliveryIdFromRoute(context, service, routeId, route, finalTarget, resolvedId -> {
+                        if (resolvedId > 0 && resolvedId != targetDeliveryId) {
+                            executeCompleteDeliveryCall(context, service, routeId, route, finalTarget, resolvedId, false, callback);
+                        } else {
+                            long idToUse = resolvedId > 0 ? resolvedId : targetDeliveryId;
+                            advanceToDeliveredViaNextStatus(service, route, finalTarget, idToUse, 3, callback);
+                        }
+                    });
+                } else if (response.code() == 404 || response.code() == 405 || response.code() == 400) {
+                    advanceToDeliveredViaNextStatus(service, route, finalTarget, targetDeliveryId, 3, callback);
+                } else {
+                    String errorMsg = "Erro na API: HTTP " + response.code();
+                    try {
+                        if (response.errorBody() != null) {
+                            String bodyStr = response.errorBody().string();
+                            if (!bodyStr.isEmpty()) errorMsg += " (" + bodyStr + ")";
+                        }
+                    } catch (Exception ignored) {}
+                    final String finalMsg = errorMsg;
+                    mainHandler.post(() -> callback.onError(finalMsg));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                markWaypointDeliveredLocally(route, finalTarget);
+                mainHandler.post(() -> callback.onSuccess(true));
+            }
+        });
+    }
+
+    private void markWaypointDeliveredLocally(Route route, Waypoint waypoint) {
+        waypoint.setStatus(WaypointStatus.DELIVERED);
+        waypoint.setCompletedAt(System.currentTimeMillis());
+        if (route != null && route.areAllWaypointsHandled()) {
+            route.setStatus(RouteStatus.COMPLETED);
+        }
+    }
+
+    private void advanceToDeliveredViaNextStatus(
+            OrbiApiService service,
+            Route route,
+            Waypoint finalTarget,
+            long deliveryId,
+            int remainingSteps,
+            RepositoryCallback<Boolean> callback
+    ) {
+        service.advanceDeliveryStatus(deliveryId).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful() && remainingSteps > 1) {
+                    advanceToDeliveredViaNextStatus(service, route, finalTarget, deliveryId, remainingSteps - 1, callback);
+                } else {
+                    markWaypointDeliveredLocally(route, finalTarget);
+                    mainHandler.post(() -> callback.onSuccess(true));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                markWaypointDeliveredLocally(route, finalTarget);
+                mainHandler.post(() -> callback.onSuccess(true));
+            }
+        });
+    }
+
+    /**
      * Cancela a entrega via PATCH /api/deliveries/{id}/cancel da Orbi API com registro de justificativa.
      */
     public void cancelDelivery(Context context, String routeId, long deliveryId, String justification, RepositoryCallback<Boolean> callback) {
         Route route = getRouteById(routeId);
-        Waypoint target = null;
-        if (route != null) {
-            for (Waypoint w : route.getWaypoints()) {
-                if (w.getDeliveryId() == deliveryId) {
-                    target = w;
-                    break;
-                }
-            }
-        }
+        Waypoint target = findTargetWaypoint(route, deliveryId);
 
         final Waypoint finalTarget = target;
         if (finalTarget != null) {
@@ -365,20 +500,230 @@ public class RouteRepository {
             }
 
             OrbiApiService service = ApiClient.getApiService(context);
-            service.cancelDelivery(deliveryId).enqueue(new Callback<Void>() {
-                @Override
-                public void onResponse(Call<Void> call, Response<Void> response) {
-                    mainHandler.post(() -> callback.onSuccess(true));
-                }
-
-                @Override
-                public void onFailure(Call<Void> call, Throwable t) {
-                    mainHandler.post(() -> callback.onSuccess(true));
-                }
-            });
+            DeliveryDetailsDto body = new DeliveryDetailsDto(justification);
+            executeCancelDeliveryCall(context, service, routeId, route, finalTarget, finalTarget.getDeliveryId(), body, true, callback);
         } else {
             callback.onError("Parada não encontrada");
         }
+    }
+
+    private void executeCancelDeliveryCall(
+            Context context,
+            OrbiApiService service,
+            String routeId,
+            Route route,
+            Waypoint finalTarget,
+            long targetDeliveryId,
+            DeliveryDetailsDto body,
+            boolean allowResolveRetry,
+            RepositoryCallback<Boolean> callback
+    ) {
+        service.cancelDelivery(targetDeliveryId, body).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    mainHandler.post(() -> callback.onSuccess(true));
+                } else if (allowResolveRetry && (response.code() == 404 || response.code() == 400)) {
+                    resolveRealDeliveryIdFromRoute(context, service, routeId, route, finalTarget, resolvedId -> {
+                        if (resolvedId > 0 && resolvedId != targetDeliveryId) {
+                            executeCancelDeliveryCall(context, service, routeId, route, finalTarget, resolvedId, body, false, callback);
+                        } else {
+                            mainHandler.post(() -> callback.onSuccess(true));
+                        }
+                    });
+                } else if (response.code() == 404 || response.code() == 400) {
+                    mainHandler.post(() -> callback.onSuccess(true));
+                } else {
+                    String errorMsg = "Erro na API: HTTP " + response.code();
+                    try {
+                        if (response.errorBody() != null) {
+                            String bodyStr = response.errorBody().string();
+                            if (!bodyStr.isEmpty()) errorMsg += " (" + bodyStr + ")";
+                        }
+                    } catch (Exception ignored) {}
+                    final String finalMsg = errorMsg;
+                    mainHandler.post(() -> callback.onError(finalMsg));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                mainHandler.post(() -> callback.onSuccess(true));
+            }
+        });
+    }
+
+    /**
+     * Pula a entrega via PATCH /api/deliveries/{id}/skip da Orbi API com registro de justificativa nos details.
+     */
+    public void skipDelivery(Context context, String routeId, long deliveryId, String justification, RepositoryCallback<Boolean> callback) {
+        Route route = getRouteById(routeId);
+        Waypoint target = findTargetWaypoint(route, deliveryId);
+
+        final Waypoint finalTarget = target;
+        if (finalTarget != null) {
+            finalTarget.setStatus(WaypointStatus.SKIPPED);
+            finalTarget.setJustification(justification);
+
+            if (route != null && route.areAllWaypointsHandled()) {
+                route.setStatus(RouteStatus.COMPLETED);
+            }
+
+            OrbiApiService service = ApiClient.getApiService(context);
+            DeliveryDetailsDto body = new DeliveryDetailsDto(justification);
+            executeSkipDeliveryCall(context, service, routeId, route, finalTarget, finalTarget.getDeliveryId(), body, true, callback);
+        } else {
+            callback.onError("Parada não encontrada");
+        }
+    }
+
+    private void executeSkipDeliveryCall(
+            Context context,
+            OrbiApiService service,
+            String routeId,
+            Route route,
+            Waypoint finalTarget,
+            long targetDeliveryId,
+            DeliveryDetailsDto body,
+            boolean allowResolveRetry,
+            RepositoryCallback<Boolean> callback
+    ) {
+        service.skipDelivery(targetDeliveryId, body).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    mainHandler.post(() -> callback.onSuccess(true));
+                } else if (allowResolveRetry && (response.code() == 404 || response.code() == 400)) {
+                    resolveRealDeliveryIdFromRoute(context, service, routeId, route, finalTarget, resolvedId -> {
+                        if (resolvedId > 0 && resolvedId != targetDeliveryId) {
+                            executeSkipDeliveryCall(context, service, routeId, route, finalTarget, resolvedId, body, false, callback);
+                        } else {
+                            mainHandler.post(() -> callback.onSuccess(true));
+                        }
+                    });
+                } else if (response.code() == 404 || response.code() == 400) {
+                    mainHandler.post(() -> callback.onSuccess(true));
+                } else {
+                    String errorMsg = "Erro na API: HTTP " + response.code();
+                    try {
+                        if (response.errorBody() != null) {
+                            String bodyStr = response.errorBody().string();
+                            if (!bodyStr.isEmpty()) errorMsg += " (" + bodyStr + ")";
+                        }
+                    } catch (Exception ignored) {}
+                    final String finalMsg = errorMsg;
+                    mainHandler.post(() -> callback.onError(finalMsg));
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                mainHandler.post(() -> callback.onSuccess(true));
+            }
+        });
+    }
+
+    private interface DeliveryIdResolverCallback {
+        void onResolved(long realDeliveryId);
+    }
+
+    private Waypoint findTargetWaypoint(Route route, long deliveryId) {
+        if (route == null || route.getWaypoints() == null) return null;
+        for (Waypoint w : route.getWaypoints()) {
+            if (w.getDeliveryId() == deliveryId) {
+                return w;
+            }
+        }
+        return route.getNextPendingWaypoint();
+    }
+
+    /**
+     * Consulta GET /api/deliveries/route/{routeId} para sincronizar os IDs reais do banco de dados
+     * quando uma chamada PATCH retorna 404 por dessincronização de IDs locais.
+     */
+    private void resolveRealDeliveryIdFromRoute(
+            Context context,
+            OrbiApiService service,
+            String routeId,
+            Route route,
+            Waypoint targetWaypoint,
+            DeliveryIdResolverCallback resolverCallback
+    ) {
+        long numericRouteId = parseNumericId(routeId);
+        service.getDeliveriesByRouteId(numericRouteId).enqueue(new Callback<List<DeliveryDto>>() {
+            @Override
+            public void onResponse(Call<List<DeliveryDto>> call, Response<List<DeliveryDto>> response) {
+                if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                    long resolved = matchAndSyncDeliveryIds(response.body(), route, targetWaypoint);
+                    resolverCallback.onResolved(resolved);
+                } else {
+                    service.getRouteDeliveries(numericRouteId).enqueue(new Callback<List<DeliveryDto>>() {
+                        @Override
+                        public void onResponse(Call<List<DeliveryDto>> call2, Response<List<DeliveryDto>> resp2) {
+                            if (resp2.isSuccessful() && resp2.body() != null && !resp2.body().isEmpty()) {
+                                long resolved = matchAndSyncDeliveryIds(resp2.body(), route, targetWaypoint);
+                                resolverCallback.onResolved(resolved);
+                            } else {
+                                resolverCallback.onResolved(-1L);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<List<DeliveryDto>> call2, Throwable t) {
+                            resolverCallback.onResolved(-1L);
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onFailure(Call<List<DeliveryDto>> call, Throwable t) {
+                resolverCallback.onResolved(-1L);
+            }
+        });
+    }
+
+    private long matchAndSyncDeliveryIds(List<DeliveryDto> dtos, Route route, Waypoint targetWaypoint) {
+        if (dtos == null || dtos.isEmpty()) return -1L;
+
+        // Sincroniza todos os deliveryIds das paradas da rota pela ordem (order)
+        if (route != null && route.getWaypoints() != null) {
+            for (Waypoint wp : route.getWaypoints()) {
+                for (DeliveryDto d : dtos) {
+                    if (d.getId() != null && d.getOrder() != null && d.getOrder() == wp.getSequenceOrder()) {
+                        wp.setDeliveryId(d.getId());
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (targetWaypoint != null) {
+            // 1. Busca pela ordem exata da parada na rota
+            for (DeliveryDto d : dtos) {
+                if (d.getId() != null && d.getOrder() != null && d.getOrder() == targetWaypoint.getSequenceOrder()) {
+                    targetWaypoint.setDeliveryId(d.getId());
+                    return d.getId();
+                }
+            }
+            // 2. Busca pelo endereço correspondente
+            String targetAddr = targetWaypoint.getFullAddress() != null ? targetWaypoint.getFullAddress().trim() : "";
+            for (DeliveryDto d : dtos) {
+                if (d.getId() != null && d.getAddress() != null && d.getAddress().trim().equalsIgnoreCase(targetAddr)) {
+                    targetWaypoint.setDeliveryId(d.getId());
+                    return d.getId();
+                }
+            }
+            // 3. Fallback: primeira entrega pendente da rota no servidor
+            for (DeliveryDto d : dtos) {
+                WaypointStatus ws = mapOrbiDeliveryStatus(d.getStatus());
+                if (d.getId() != null && !ws.isTerminal()) {
+                    targetWaypoint.setDeliveryId(d.getId());
+                    return d.getId();
+                }
+            }
+        }
+        return -1L;
     }
 
     /**
@@ -524,18 +869,52 @@ public class RouteRepository {
     }
 
     public boolean startRoute(String routeId) {
+        return startRoute(null, routeId);
+    }
+
+    public boolean startRoute(Context context, String routeId) {
         Route route = getRouteById(routeId);
         if (route != null) {
+            boolean wasAssigned = route.getStatus() == RouteStatus.ASSIGNED || route.getStatus() == RouteStatus.PENDING;
             route.setStatus(RouteStatus.IN_PROGRESS);
+            if (context != null && wasAssigned) {
+                long numericId = parseNumericId(routeId);
+                ApiClient.getApiService(context).advanceRouteStatus(numericId).enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                    }
+                });
+            }
             return true;
         }
         return false;
     }
 
     public boolean completeRoute(String routeId) {
+        return completeRoute(null, routeId);
+    }
+
+    public boolean completeRoute(Context context, String routeId) {
         Route route = getRouteById(routeId);
         if (route != null) {
+            boolean wasInProgress = route.getStatus() == RouteStatus.IN_PROGRESS;
             route.setStatus(RouteStatus.COMPLETED);
+            if (context != null && wasInProgress) {
+                long numericId = parseNumericId(routeId);
+                ApiClient.getApiService(context).advanceRouteStatus(numericId).enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                    }
+                });
+            }
             return true;
         }
         return false;
@@ -557,6 +936,8 @@ public class RouteRepository {
                 return WaypointStatus.DELIVERED;
             case "CANCELLED":
                 return WaypointStatus.CANCELLED;
+            case "SKIPPED":
+                return WaypointStatus.SKIPPED;
             case "IN_TRANSIT":
             case "OUT_FOR_DELIVERY":
                 return WaypointStatus.IN_TRANSIT;

@@ -1,5 +1,6 @@
 package com.orbi.orbi_app.data.remote;
 
+import com.orbi.orbi_app.data.remote.dto.DeliveryDetailsDto;
 import com.orbi.orbi_app.data.remote.dto.DeliveryDto;
 import com.orbi.orbi_app.data.remote.dto.DirectionsResponseDto;
 import com.orbi.orbi_app.data.remote.dto.LoginRequestDto;
@@ -32,12 +33,24 @@ public interface OrbiApiService {
     @GET("api/deliveries/route/{routeId}")
     Call<List<DeliveryDto>> getDeliveriesByRouteId(@Path("routeId") long routeId);
 
+    @GET("api/route/{id}/deliveries")
+    Call<List<DeliveryDto>> getRouteDeliveries(@Path("id") long id);
+
     @GET("api/route/{id}/directions")
     Call<DirectionsResponseDto> getRouteDirections(@Path("id") long id);
+
+    @PATCH("api/route/{id}/next-status")
+    Call<Void> advanceRouteStatus(@Path("id") long id);
 
     @PATCH("api/deliveries/{id}/next-status")
     Call<Void> advanceDeliveryStatus(@Path("id") long id);
 
+    @PATCH("api/deliveries/{id}/delivered")
+    Call<Void> completeDelivery(@Path("id") long id);
+
     @PATCH("api/deliveries/{id}/cancel")
-    Call<Void> cancelDelivery(@Path("id") long id);
+    Call<Void> cancelDelivery(@Path("id") long id, @Body DeliveryDetailsDto body);
+
+    @PATCH("api/deliveries/{id}/skip")
+    Call<Void> skipDelivery(@Path("id") long id, @Body DeliveryDetailsDto body);
 }

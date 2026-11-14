@@ -30,6 +30,9 @@ public class DeliveryDto {
     @SerializedName("deliveredAt")
     private String deliveredAt;
 
+    @SerializedName("details")
+    private String details;
+
     public Long getId() {
         return id;
     }
@@ -64,5 +67,13 @@ public class DeliveryDto {
 
     public String getDeliveredAt() {
         return deliveredAt;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public void setDetails(String details) {
+        this.details = details;
     }
 }

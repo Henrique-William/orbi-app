@@ -50,11 +50,13 @@
     <string name="cd_server_chip">Servidor atual: %1$s. Toque para alterar.</string>
     <string name="server_dialog_title">Servidor da Orbi API</string>
     <string name="server_option_cloud">Nuvem (orbi-api-em6s.onrender.com)</string>
-    <string name="server_option_localhost">Local (localhost:8080)</string>
+    <string name="server_option_emulator">Local · Emulador (10.0.2.2:8080)</string>
+    <string name="server_option_lan">Local · Rede Wi-Fi (192.168.1.60:8080)</string>
+    <string name="server_option_localhost">Local · USB / ADB (localhost:8080)</string>
     <string name="server_option_custom">Endereço personalizado…</string>
     <string name="server_custom_title">Endereço personalizado</string>
     <string name="server_custom_hint">URL do servidor</string>
-    <string name="server_custom_helper">Ex.: http://192.168.1.10:8080/</string>
+    <string name="server_custom_helper">Ex.: http://192.168.1.60:8080/</string>
     <string name="server_saved">Servidor alterado para %1$s</string>
 
     <!-- Home / Rotas -->
@@ -165,6 +167,18 @@
     <string name="btn_confirm_skip">Pular parada</string>
     <string name="btn_confirm_cancel">Cancelar entrega</string>
     <string name="btn_dismiss">Voltar</string>
+
+    <!-- Novos botões Flat Design e Gestos -->
+    <string name="slide_to_deliver">Deslize para concluir entrega</string>
+    <string name="btn_hold_skip">Pular</string>
+    <string name="btn_hold_skip_hint">Segure 3s para pular</string>
+    <string name="btn_hold_cancel">Cancelar</string>
+    <string name="btn_hold_cancel_hint">Segure 3s para cancelar</string>
+    <string name="reason_schedule_incompatible">Horário de entrega incompatível</string>
+    <string name="cd_expand_sheet">Arraste ou toque para expandir informações da rota</string>
+    <string name="nav_route_progress_summary">Parada %1$d de %2$d · %3$d concluídas</string>
+    <string name="nav_next_stop_preview">Próxima: #%1$02d — %2$s</string>
+    <string name="nav_last_stop_preview">Última parada pendente desta rota</string>
 
     <!-- Fim da rota -->
     <string name="all_stops_handled_title">Todas as paradas finalizadas</string>

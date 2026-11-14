@@ -203,6 +203,7 @@ public class HomeActivity extends AppCompatActivity {
                 .setMessage(R.string.logout_message)
                 .setPositiveButton(R.string.logout_confirm, (dialog, which) -> {
                     sessionManager.clearSession();
+                    repository.resetForNewSession();
                     Intent intent = new Intent(HomeActivity.this, LoginActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);

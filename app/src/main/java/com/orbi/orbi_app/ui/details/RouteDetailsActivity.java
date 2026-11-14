@@ -30,7 +30,6 @@ public class RouteDetailsActivity extends AppCompatActivity {
     private MaterialToolbar toolbar;
     private RecyclerView rvWaypoints;
     private View layoutBottomBar;
-    private MaterialButton btnViewMap;
     private MaterialButton btnRouteAction;
 
     private RouteRepository repository;
@@ -52,7 +51,6 @@ public class RouteDetailsActivity extends AppCompatActivity {
         toolbar = findViewById(R.id.toolbar);
         rvWaypoints = findViewById(R.id.rvWaypoints);
         layoutBottomBar = findViewById(R.id.layoutBottomBar);
-        btnViewMap = findViewById(R.id.btnViewMap);
         btnRouteAction = findViewById(R.id.btnRouteAction);
 
         // Edge-to-edge: toolbar abaixo da status bar; rodapé estende-se por trás da barra de navegação
@@ -60,16 +58,6 @@ public class RouteDetailsActivity extends AppCompatActivity {
         InsetsUtils.applyPadding(layoutBottomBar, InsetsUtils.BOTTOM, false);
 
         toolbar.setNavigationOnClickListener(v -> finish());
-        toolbar.inflateMenu(R.menu.menu_route_details);
-        toolbar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.action_view_map) {
-                openNavigationMap();
-                return true;
-            }
-            return false;
-        });
-
-        btnViewMap.setOnClickListener(v -> openNavigationMap());
         setupRecyclerView();
     }
 
@@ -159,7 +147,7 @@ public class RouteDetailsActivity extends AppCompatActivity {
             btnRouteAction.setIconResource(R.drawable.ic_check);
             btnRouteAction.setEnabled(true);
             btnRouteAction.setOnClickListener(v -> {
-                repository.completeRoute(routeId);
+                repository.completeRoute(this, routeId);
                 Toast.makeText(this, R.string.route_completed_toast, Toast.LENGTH_LONG).show();
                 bindRouteData(currentRoute);
                 finish();
@@ -176,7 +164,7 @@ public class RouteDetailsActivity extends AppCompatActivity {
             btnRouteAction.setIconResource(R.drawable.ic_navigation);
             btnRouteAction.setEnabled(true);
             btnRouteAction.setOnClickListener(v -> {
-                repository.startRoute(routeId);
+                repository.startRoute(this, routeId);
                 openNavigationMap();
             });
         }

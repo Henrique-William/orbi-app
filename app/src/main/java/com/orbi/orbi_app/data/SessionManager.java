@@ -2,6 +2,7 @@ package com.orbi.orbi_app.data;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.util.Base64;
 
 import org.json.JSONObject;
@@ -17,7 +18,9 @@ public class SessionManager {
     private static final String KEY_DRIVER_USER_ID = "driver_user_id";
     private static final String KEY_SERVER_URL = "server_url";
 
-    public static final String DEFAULT_SERVER_URL = "http://10.0.2.2:8080/";
+    public static final String DEFAULT_EMULATOR_URL = "http://10.0.2.2:8080/";
+    public static final String DEFAULT_LAN_URL = "http://192.168.1.60:8080/";
+    public static final String DEFAULT_SERVER_URL = DEFAULT_EMULATOR_URL;
 
     private final SharedPreferences preferences;
 
@@ -68,14 +71,34 @@ public class SessionManager {
     }
 
     public String getServerUrl() {
-        return preferences.getString(KEY_SERVER_URL, DEFAULT_SERVER_URL);
+        String defaultUrl = isEmulator() ? DEFAULT_EMULATOR_URL : DEFAULT_LAN_URL;
+        return preferences.getString(KEY_SERVER_URL, defaultUrl);
     }
 
     public void setServerUrl(String url) {
+        if (url == null) return;
+        url = url.trim();
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            url = "http://" + url;
+        }
         if (!url.endsWith("/")) {
             url += "/";
         }
         preferences.edit().putString(KEY_SERVER_URL, url).apply();
+    }
+
+    public static boolean isEmulator() {
+        return Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk".equals(Build.PRODUCT)
+                || Build.PRODUCT.contains("sdk_gphone")
+                || Build.HARDWARE.contains("goldfish")
+                || Build.HARDWARE.contains("ranchu");
     }
 
     public void clearSession() {

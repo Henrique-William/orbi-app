@@ -37,6 +37,8 @@ import retrofit2.Response;
 public class LoginActivity extends AppCompatActivity {
 
     private static final String SERVER_CLOUD = "https://orbi-api-em6s.onrender.com/";
+    private static final String SERVER_EMULATOR = SessionManager.DEFAULT_EMULATOR_URL;
+    private static final String SERVER_LAN = SessionManager.DEFAULT_LAN_URL;
     private static final String SERVER_LOCAL = "http://localhost:8080/";
     private static final String DEMO_EMAIL = "carlos.silva@exemplo.com";
 
@@ -119,6 +121,8 @@ public class LoginActivity extends AppCompatActivity {
     private void showServerConfigDialog() {
         String[] options = {
                 getString(R.string.server_option_cloud),
+                getString(R.string.server_option_emulator),
+                getString(R.string.server_option_lan),
                 getString(R.string.server_option_localhost),
                 getString(R.string.server_option_custom)
         };
@@ -130,6 +134,10 @@ public class LoginActivity extends AppCompatActivity {
                     if (which == 0) {
                         applyServer(SERVER_CLOUD);
                     } else if (which == 1) {
+                        applyServer(SERVER_EMULATOR);
+                    } else if (which == 2) {
+                        applyServer(SERVER_LAN);
+                    } else if (which == 3) {
                         applyServer(SERVER_LOCAL);
                     } else {
                         showCustomUrlPrompt();

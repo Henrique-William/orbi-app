@@ -22,7 +22,7 @@ public enum WaypointStatus {
     }
 
     public boolean isTerminal() {
-        return this == COMPLETED || this == DELIVERED || this == CANCELLED;
+        return this == COMPLETED || this == DELIVERED || this == CANCELLED || this == SKIPPED;
     }
 
     public boolean isAtPickup() {
