@@ -715,6 +715,8 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         // Aplica o estilo personalizado dos JSONs anexos
         applyCustomMapStyle();
         updateMapPadding();
+        hideGoogleWatermark();
+        mapView.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> removeGoogleLogoView(mapView));
 
         // Detecta se o usuário arrastou o mapa manualmente para pausar o acompanhamento automático
         googleMap.setOnCameraMoveStartedListener(reason -> {
@@ -1098,7 +1100,7 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     }
 
     /**
-     * Alterna entre a Câmera 3D de Perseguição (Uber Follow Mode) e a Visão Geral 2D da Rota Completa.
+     * Alterna entre a Câmera 3D de Perseguição (Uber Follow Mode) e a Visão Geral 2D da Rota Atual Completa.
      */
     private void toggleRouteOverview() {
         if (googleMap == null) return;
@@ -1125,27 +1127,62 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         if (currentTargetLatLng != null) {
             builder.include(currentTargetLatLng);
             includedCount++;
+        } else if (currentWaypoint != null && currentWaypoint.getLatitude() != 0.0 && currentWaypoint.getLongitude() != 0.0) {
+            builder.include(new LatLng(currentWaypoint.getLatitude(), currentWaypoint.getLongitude()));
+            includedCount++;
         }
-        if (currentRoutePoints != null) {
+        if (currentRoutePoints != null && !currentRoutePoints.isEmpty()) {
             for (LatLng pt : currentRoutePoints) {
                 builder.include(pt);
                 includedCount++;
             }
         }
-        if (currentRoute != null && currentRoute.getWaypoints() != null) {
-            for (Waypoint wp : currentRoute.getWaypoints()) {
-                if (wp.getLatitude() != 0.0 && wp.getLongitude() != 0.0
-                        && !(Math.abs(wp.getLatitude() - (-23.550520)) < 0.0001 && Math.abs(wp.getLongitude() - (-46.633308)) < 0.0001)) {
-                    builder.include(new LatLng(wp.getLatitude(), wp.getLongitude()));
-                    includedCount++;
-                }
-            }
-        }
 
         if (includedCount >= 2) {
             try {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(builder.build(), dpToPx(48)), 600, null);
-            } catch (Exception ignored) {
+                LatLngBounds bounds = builder.build();
+                if (bounds.northeast.equals(bounds.southwest)) {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(bounds.getCenter(), 16f), 600, null);
+                } else {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, dpToPx(36)), 600, null);
+                }
+            } catch (Exception e) {
+                if (currentDriverLatLng != null) {
+                    googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentDriverLatLng, 16f), 600, null);
+                }
+            }
+        } else if (currentDriverLatLng != null) {
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentDriverLatLng, 16f), 600, null);
+        }
+    }
+
+    private void hideGoogleWatermark() {
+        if (mapView == null) return;
+        mapView.post(() -> removeGoogleLogoView(mapView));
+        mapView.postDelayed(() -> removeGoogleLogoView(mapView), 500);
+        mapView.postDelayed(() -> removeGoogleLogoView(mapView), 1500);
+    }
+
+    private void removeGoogleLogoView(View v) {
+        if (v == null) return;
+        if (v instanceof ViewGroup) {
+            ViewGroup vg = (ViewGroup) v;
+            for (int i = 0; i < vg.getChildCount(); i++) {
+                removeGoogleLogoView(vg.getChildAt(i));
+            }
+        } else if (v instanceof ImageView) {
+            Object tag = v.getTag();
+            CharSequence desc = v.getContentDescription();
+            String tagStr = tag != null ? tag.toString() : "";
+            String descStr = desc != null ? desc.toString() : "";
+            if ("GoogleWatermark".equalsIgnoreCase(tagStr)
+                    || "Google".equalsIgnoreCase(descStr)
+                    || descStr.toLowerCase().contains("google")) {
+                v.setVisibility(View.GONE);
+                v.setAlpha(0f);
+                v.setScaleX(0f);
+                v.setScaleY(0f);
+                v.setTranslationY(10000f);
             }
         }
     }
