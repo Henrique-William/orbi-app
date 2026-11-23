@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Orbi — Design System (Minimal Blue & Monochrome)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* =============================================================================
+     Orbi Design System — Moderno & Simplificado
+     Paleta reduzida à essência: Azul Orbi (#2557D6), Off-White (#F7F7F5 / #FFFFFF)
+     e Preto Carbono (#0A0A0A). Zero ruído cromático.
+     ============================================================================= */
+  :root {
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --mono: "JetBrains Mono", "Cascadia Mono", ui-monospace, Consolas, monospace;
+
+    /* 1. Azul Principal (Único destaque cromático) */
+    --primary: #2557D6;
+    --primary-hover: #1D46B0;
+    --primary-soft: #EEF3FD;
+    --primary-line: #C9D7F7;
+    --on-primary: #FFFFFF;
+
+    /* 2. Preto & Cinzas Neutros Puros (Tipografia e Estrutura) */
+    --black: #0A0A0A;
+    --ink: #0A0A0A;
+    --ink-2: #262626;
+    --muted: #666666;
+    --faint: #999999;
+
+    /* 3. Off-White & Branco (Superfícies) */
+    --bg: #F7F7F5;
+    --surface: #FFFFFF;
+    --surface-2: #F0F0EE;
+    --line: #E5E5E3;
+    --line-2: #EDEDEB;
+
+    /* Raios e Foco */
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-lg: 20px;
+    --shadow: 0 1px 2px rgba(10, 10, 10, 0.03);
+    --focus: 0 0 0 3px rgba(37, 87, 214, 0.20);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg); color: var(--ink);
+    font: 14px/1.55 var(--font);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+  code, pre, .mono { font-family: var(--mono); }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  .wrap {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 44px 32px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+  }
+
+  /* Header */
+  .ds-head {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .ds-brand { display: flex; align-items: center; gap: 16px; }
+  .brand-logo {
+    width: 48px; height: 48px; border-radius: 11px;
+    background: var(--primary); color: #FFFFFF;
+    display: inline-grid; place-items: center; flex: none;
+  }
+  .brand-logo svg { width: 32px; height: 32px; }
+  .ds-brand h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.025em; color: var(--ink); }
+  .ds-brand p { margin: 3px 0 0; font-size: 13.5px; color: var(--muted); }
+  .ds-meta { text-align: right; font-family: var(--mono); font-size: 11px; color: var(--muted); line-height: 1.6; }
+  .ds-meta .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--primary-soft); color: var(--primary); border: 1px solid var(--primary-line);
+    padding: 3px 10px; border-radius: 6px; font-weight: 600; font-size: 10.5px; margin-bottom: 4px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  /* Section structure */
+  .sec { display: flex; flex-direction: column; gap: 16px; }
+  .sec-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding-bottom: 10px;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .sec-title { display: flex; align-items: baseline; gap: 10px; }
+  .sec-num { font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--primary); letter-spacing: 0.12em; text-transform: uppercase; }
+  .sec-head h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+  .sec-head p { margin: 0; font-size: 13px; color: var(--muted); }
+  .sub-label { font-family: var(--mono); font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 4px 0; }
+
+  /* 1. Color Hierarchy (3 core pillars: Blue, Off-White, Black) */
+  .hierarchy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .swatch-lg {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .swatch-lg .fill {
+    height: 116px; padding: 14px 16px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .swatch-lg .fill .ratio {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+    padding: 3px 8px; border-radius: 4px; width: fit-content;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .swatch-lg .fill .token { font-family: var(--mono); font-size: 11.5px; }
+  .swatch-lg .body { padding: 16px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .swatch-lg .tier-row { display: flex; align-items: center; justify-content: space-between; }
+  .swatch-lg .tier { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .swatch-lg .hex {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: var(--ink); background: var(--surface-2);
+    padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line);
+  }
+  .swatch-lg .desc { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 2px 0 0; }
+  .swatch-lg .sub-tokens {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line-2);
+  }
+  .mini-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-2);
+    background: var(--bg); border: 1px solid var(--line);
+    padding: 2px 7px; border-radius: 4px;
+  }
+  .mini-chip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; border: 1px solid rgba(0,0,0,0.12); }
+
+  /* 2. Extended Scale (Monochrome + Blue Scale only) */
+  .palette-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+  .sw-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .sw-card .color-box {
+    height: 54px; display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 6px 10px; font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  }
+  .sw-card .info { padding: 10px 12px; }
+  .sw-card .name { font-weight: 600; font-size: 12.5px; color: var(--ink); display: block; }
+  .sw-card .var { font-family: var(--mono); font-size: 10.5px; color: var(--muted); display: block; margin-top: 2px; }
+  .sw-card .role { font-size: 11px; color: var(--muted); margin-top: 4px; display: block; line-height: 1.35; }
+
+  /* 3. Typography */
+  .type-layout { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; }
+  .ds-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+  .type-specimen { display: flex; flex-direction: column; gap: 14px; }
+  .type-row {
+    display: grid; grid-template-columns: 150px 1fr; align-items: baseline;
+    gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line-2);
+  }
+  .type-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .type-meta { font-family: var(--mono); font-size: 10.5px; color: var(--muted); line-height: 1.45; }
+  .type-meta b { color: var(--ink); display: block; }
+  .weight-ladder { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .w-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px; background: var(--bg);
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+  }
+  .w-item span.code-tag { font-family: var(--mono); font-size: 11px; color: var(--primary); font-weight: 600; }
+
+  /* 4. Principles */
+  .principles-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .p-card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .p-card .p-idx {
+    font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+    color: var(--primary); background: var(--primary-soft);
+    border: 1px solid var(--primary-line); width: fit-content;
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .p-card h3 { margin: 4px 0 0; font-size: 15px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .p-card p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .p-card .p-src { margin-top: auto; padding-top: 8px; font-family: var(--mono); font-size: 10px; color: var(--faint); }
+
+  /* 5. Components */
+  .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .comp-box {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 22px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+  .comp-box-head {
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--line-2); padding-bottom: 10px;
+  }
+  .comp-box-head h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .comp-box-head span { font-family: var(--mono); font-size: 10.5px; color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  svg.ic { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  svg.ic.sm { width: 16px; height: 16px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 36px; padding: 0 14px; border-radius: var(--radius-sm);
+    font-weight: 600; font-size: 13px; white-space: nowrap;
+    border: 1px solid transparent; cursor: pointer; font-family: var(--font);
+  }
+  .btn.primary { background: var(--primary); color: #FFFFFF; }
+  .btn.dark { background: var(--black); color: #FFFFFF; }
+  .btn.ghost { background: var(--surface); border-color: var(--line); color: var(--ink); }
+  .btn.soft { background: var(--primary-soft); border-color: var(--primary-line); color: var(--primary); }
+  .btn.sm { height: 30px; padding: 0 10px; font-size: 12px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 24px; padding: 0 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 500; white-space: nowrap; border: 1px solid;
+  }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge.blue { color: var(--primary); background: var(--primary-soft); border-color: var(--primary-line); }
+  .badge.dark { color: #FFFFFF; background: var(--black); border-color: var(--black); }
+  .badge.neutral { color: var(--ink-2); background: var(--bg); border-color: var(--line); }
+  .badge.outline { color: var(--muted); background: var(--surface); border-color: var(--line); }
+
+  .chip {
+    height: 32px; padding: 0 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink-2); font-weight: 500; font-size: 12.5px;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .chip em { font-style: normal; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .chip.on { background: var(--primary); color: #FFFFFF; border-color: var(--primary); }
+  .chip.on em { color: rgba(255,255,255,0.8); }
+
+  .input-demo {
+    display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px;
+    border: 1px solid var(--primary); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--muted);
+    box-shadow: var(--focus); font-size: 13px; flex: 1; min-width: 200px;
+  }
+  .input-demo span { color: var(--ink); flex: 1; }
+  kbd { font: 500 10.5px/1 var(--mono); padding: 3px 5px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); }
+
+  .kpi-strip { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+  .kpi-cell { padding: 14px; border-right: 1px solid var(--line-2); display: flex; flex-direction: column; gap: 4px; }
+  .kpi-cell:last-child { border-right: 0; }
+  .kpi-cell .k-top { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); font-weight: 500; }
+  .kpi-cell .k-top b { color: var(--primary); font-family: var(--mono); }
+  .kpi-cell .k-val { font-size: 22px; font-weight: 700; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .kpi-cell .k-val small { font-size: 12px; color: var(--muted); font-weight: 400; }
+  .bar { display: block; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; margin-top: 4px; }
+  .bar i { display: block; height: 100%; border-radius: 3px; background: var(--primary); }
+
+  /* Mobile M3 Simplified Monochrome + Blue */
+  .m3-surface { background: var(--bg); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .m3-maneuver { background: var(--black); color: #FFFFFF; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+  .m3-maneuver .turn-box { width: 42px; height: 42px; border-radius: 10px; background: var(--primary); color: #FFFFFF; display: grid; place-items: center; flex: none; }
+  .m3-maneuver .m-main { flex: 1; min-width: 0; }
+  .m3-maneuver .m-main b { display: block; font-size: 14px; letter-spacing: -0.01em; }
+  .m3-maneuver .m-main small { color: #A3A3A3; font-size: 12px; }
+  .m3-maneuver .gps-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10.5px; font-weight: 600; color: #FFFFFF; background: #1F1F1F; border: 1px solid #333333; padding: 4px 9px; border-radius: 999px; }
+  .m3-maneuver .gps-badge i { width: 6px; height: 6px; border-radius: 50%; background: var(--primary); }
+
+  .m3-route-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .m3-btn-56 { height: 48px; border-radius: 12px; background: var(--primary); color: #FFFFFF; font-size: 14.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; width: 100%; }
+
+  .m3-gesture-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+  .m3-slide-track { height: 46px; border-radius: 999px; background: var(--primary-soft); border: 1px solid var(--primary-line); display: flex; align-items: center; padding: 4px; gap: 10px; color: var(--primary); font-weight: 600; font-size: 12.5px; }
+  .m3-slide-thumb { width: 38px; height: 38px; border-radius: 50%; background: var(--primary); color: #FFFFFF; display: grid; place-items: center; flex: none; }
+  .m3-hold-btn { height: 46px; padding: 0 14px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; background: var(--surface); color: var(--ink-2); border: 1px solid var(--line); }
+
+  /* 6. Icons */
+  .icon-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 10px; }
+  .ic-tile {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 12px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    color: var(--ink); transition: border-color .12s, color .12s;
+  }
+  .ic-tile:hover { border-color: var(--primary); color: var(--primary); }
+  .ic-tile span { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+  /* 7. Wordmarks & Lockups */
+  .wm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .wm-card {
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 24px;
+    display: flex; flex-direction: column; gap: 12px;
+    min-height: 140px; justify-content: center;
+  }
+  .wm-card.dark { background: var(--black); border-color: var(--black); color: #FFFFFF; }
+  .wm-lockup { display: flex; align-items: center; gap: 12px; }
+  .wm-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .wm-sub { font-size: 12px; color: var(--muted); display: block; font-weight: 500; }
+  .wm-note { font-size: 12.5px; color: var(--muted); margin: 0; line-height: 1.45; }
+  .wm-tag { font-family: var(--mono); font-size: 10px; color: var(--faint); text-transform: uppercase; letter-spacing: 0.1em; margin-top: auto; }
+
+  /* Footer */
+  .ds-foot {
+    border-top: 1px solid var(--line); padding-top: 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    flex-wrap: wrap; gap: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. HEADER -->
+  <header class="ds-head">
+    <div class="ds-brand">
+      <span class="brand-logo" aria-hidden="true">
+        <svg viewBox="31 31 46 46">
+          <circle cx="54" cy="54" r="17" fill="none" stroke="currentColor" stroke-width="4.5" />
+          <circle cx="54" cy="54" r="6.5" fill="currentColor" />
+          <circle cx="67.5" cy="40.5" r="4.5" fill="currentColor" />
+        </svg>
+      </span>
+      <div>
+        <h1>Orbi Design System</h1>
+        <p>Sistema visual minimalista · <b>Azul Orbi</b>, <b>Off-White</b> e <b>Preto Carbono</b> para Web e Mobile</p>
+      </div>
+    </div>
+    <div class="ds-meta">
+      <span class="pill">v2.0 · Minimal Edition</span><br/>
+      60% Off-White · 30% Carbon Black · 10% Orbi Blue
+    </div>
+  </header>
+
+  <!-- 2. COLOR HIERARCHY -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-title">
+        <span class="sec-num">01 / Paleta Principal</span>
+        <h2>Hierarquia Cromática Simplificada</h2>
+      </div>
+      <p>Três pilares visuais: Azul Orbi para ações e rota ativa, Off-White para respiro e Preto Carbono para contraste tipográfico.</p>
+    </div>
+
+    <div class="hierarchy-grid">
+      <!-- Primary: Orbi Blue -->
+      <div class="swatch-lg">
+        <div class="fill" style="background: #2557D6; color: #FFFFFF;">
+          <span class="ratio" style="background: rgba(255,255,255,0.16); color: #FFFFFF;">10% · Cor Principal</span>
+          <span class="token">--primary</span>
+        </div>
+        <div class="body">
+          <div class="tier-row">
+            <span class="tier" style="color: #2557D6;">Primary · Azul Orbi</span>
+            <span class="hex">#2557D6</span>
+          </div>
+          <p class="desc">Único sotaque cromático do sistema: marca, botões de ação primária, estado selecionado, polilinha da rota e indicador GPS.</p>
+          <div class="sub-tokens">
+            <span class="mini-chip"><i style="background:#1D46B0"></i>Hover #1D46B0</span>
+            <span class="mini-chip"><i style="background:#EEF3FD"></i>Soft #EEF3FD</span>
+            <span class="mini-chip"><i style="background:#C9D7F7"></i>Line #C9D7F7</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secondary: Carbon Black -->
+      <div class="swatch-lg">
+        <div class="fill" style="background: #0A0A0A; color: #FFFFFF;">
+          <span class="ratio" style="background: rgba(255,255,255,0.14); color: #FFFFFF;">30% · Contraste & Leitura</span>
+          <span class="token">--ink · --black</span>
+        </div>
+        <div class="body">
+          <div class="tier-row">
+            <span class="tier">Secondary · Preto Carbono</span>
+            <span class="hex">#0A0A0A</span>
+          </div>
+          <p class="desc">Tipografia principal, valores de KPIs, ícones lineares, superfície de navegação embarcada e botões secundários de alto contraste.</p>
+          <div class="sub-tokens">
+            <span class="mini-chip"><i style="background:#262626"></i>Ink-2 #262626</span>
+            <span class="mini-chip"><i style="background:#666666"></i>Muted #666666</span>
+            <span class="mini-chip"><i style="background:#999999"></i>Faint #999999</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tertiary: Off-White & Pure White -->
+      <div class="swatch-lg">
+        <div class="fill" style="background: #F7F7F5; color: #0A0A0A; border-bottom: 1px solid #E5E5E3;">
+          <span class="ratio" style="background: #FFFFFF; color: #0A0A0A; border: 1px solid #E5E5E3;">60% · Base Neutra</span>
+          <span class="token">--bg · --surface</span>
+        </div>
+        <div class="body">
+          <div class="tier-row">
+            <span class="tier">Neutral · Off-White & Branco</span>
+            <span class="hex">#F7F7F5 / #FFFFFF</span>
+          </div>
+          <p class="desc">Fundo Off-White suave que reduz a fadiga ocular combinado com cartões em branco puro e divisores sutis de 1px.</p>
+          <div class="sub-tokens">
+            <span class="mini-chip"><i style="background:#FFFFFF"></i>Surface #FFFFFF</span>
+            <span class="mini-chip"><i style="background:#F0F0EE"></i>Container #F0F0EE</span>
+            <span class="mini-chip"><i style="background:#E5E5E3"></i>Line #E5E5E3</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. MONOCHROME + BLUE SCALE -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-title">
+        <span class="sec-num">02 / Escala Tonal</span>
+        <h2>Escala Monocromática & Tons de Azul</h2>
+      </div>
+      <p>Toda a hierarquia de interface é construída apenas com contraste luminoso e tons derivados do Azul Orbi.</p>
+    </div>
+
+    <div class="palette-grid">
+      <div class="sw-card">
+        <div class="color-box" style="background:#FFFFFF; color:#0A0A0A; border-bottom:1px solid #E5E5E3;"><span>#FFFFFF</span><span>100</span></div>
+        <div class="info"><span class="name">Pure White</span><span class="var">--surface</span><span class="role">Cards, modais e barra lateral</span></div>
+      </div>
+      <div class="sw-card">
+        <div class="color-box" style="background:#F7F7F5; color:#0A0A0A; border-bottom:1px solid #E5E5E3;"><span>#F7F7F5</span><span>96</span></div>
+        <div class="info"><span class="name">Off-White Canvas</span><span class="var">--bg</span><span class="role">Plano de fundo global Web e App</span></div>
+      </div>
+      <div class="sw-card">
+        <div class="color-box" style="background:#E5E5E3; color:#0A0A0A;"><span>#E5E5E3</span><span>90</span></div>
+        <div class="info"><span class="name">Warm Hairline</span><span class="var">--line</span><span class="role">Bordas estruturais de 1px e grades</span></div>
+      </div>
+      <div class="sw-card">
+        <div class="color-box" style="background:#666666; color:#FFFFFF;"><span>#666666</span><span>40</span></div>
+        <div class="info"><span class="name">Neutral Muted</span><span class="var">--muted</span><span class="role">Subtítulos, unidades e metadados</span></div>
+      </div>
+      <div class="sw-card">
+        <div class="color-box" style="background:#0A0A0A; color:#FFFFFF;"><span>#0A0A0A</span><span>04</span></div>
+        <div class="info"><span class="name">Carbon Black</span><span class="var">--ink / --black</span><span class="role">Títulos, números e modo noturno</span></div>
+      </div>
+      <div class="sw-card">
+        <div class="color-box" style="background:#EEF3FD; color:#2557D6; border-bottom:2px solid #2557D6;"><span>#EEF3FD</span><span>Blue Tint</span></div>
+        <div class="info"><span class="name">Orbi Blue Soft</span><span class="var">--primary-soft</span><span class="role">Fundo de seleção, chips ativos e foco</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. TYPOGRAPHY -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-title">
+        <span class="sec-num">03 / Tipografia</span>
+        <h2>Escala Tipográfica & Precisão Tabular</h2>
+      </div>
+      <p>Inter com <code>cv11</code>, <code>ss01</code> e <code>tabular-nums</code> para leitura rápida; JetBrains / Cascadia Mono para códigos.</p>
+    </div>
+
+    <div class="type-layout">
+      <div class="ds-card type-specimen">
+        <div class="type-row">
+          <div class="type-meta"><b>Display / KPI</b>24px · Bold 700<br/>tracking -0.025em · tnum</div>
+          <div class="tnum" style="font-size: 24px; font-weight: 700; letter-spacing: -0.025em; color: var(--ink);">94,8% Entregas no Prazo · 18/19</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><b>Route Identifier</b>20px · Bold 700<br/>tracking -0.015em · tnum</div>
+          <div class="tnum" style="font-size: 20px; font-weight: 700; letter-spacing: -0.015em; color: var(--ink);">ROTA-SP-04 · Baixada Santista (~42 min)</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><b>Primary Action</b>15px · SemiBold 600<br/>Orbi Blue #2557D6</div>
+          <div style="font-size: 15px; font-weight: 600; color: var(--primary);">Iniciar rota · Confirmar entrega</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><b>Body Base</b>14px / 1.55 · Regular 400<br/>cv11 · ss01</div>
+          <div style="font-size: 14px; color: var(--ink-2);">Interface limpa em Off-White e Preto Carbono onde apenas elementos interativos e rotas ativas recebem o Azul Orbi.</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><b>Monospace</b>12px · JetBrains Mono<br/>Códigos · Atalhos · GPS</div>
+          <div class="mono" style="font-size: 12px; color: var(--ink-2);">ROTA-SP-01 · <kbd>Ctrl K</kbd> · -23.9618, -46.3322</div>
+        </div>
+      </div>
+
+      <div class="ds-card">
+        <div class="sub-label" style="margin-top:0;">Escada de Pesos (Inter)</div>
+        <div class="weight-ladder">
+          <div class="w-item">
+            <span style="font-weight: 400; font-size: 13.5px;">Inter Regular — Texto corrido, células e logradouros</span>
+            <span class="code-tag">400</span>
+          </div>
+          <div class="w-item">
+            <span style="font-weight: 500; font-size: 13.5px;">Inter Medium — Navegação, chips, filtros e tabelas</span>
+            <span class="code-tag">500</span>
+          </div>
+          <div class="w-item">
+            <span style="font-weight: 600; font-size: 13.5px;">Inter SemiBold — Botões, cabeçalhos de seção e labels</span>
+            <span class="code-tag">600</span>
+          </div>
+          <div class="w-item">
+            <span style="font-weight: 700; font-size: 13.5px;">Inter Bold — Valores de KPI, códigos de rota e títulos</span>
+            <span class="code-tag">700</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. PRINCIPLES -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-title">
+        <span class="sec-num">04 / Princípios</span>
+        <h2>Diretrizes do Design Simplificado</h2>
+      </div>
+      <p>Menos cores, maior clareza operacional.</p>
+    </div>
+
+    <div class="principles-grid">
+      <div class="p-card">
+        <span class="p-idx">01 · MONOCROMO + AZUL</span>
+        <h3>Um Único Sotaque de Cor</h3>
+        <p>Toda a estrutura usa Off-White (<code>#F7F7F5</code>), Branco (<code>#FFFFFF</code>) e Preto Carbono (<code>#0A0A0A</code>). O Azul Orbi (<code>#2557D6</code>) guia o olhar imediatamente para a ação principal.</p>
+        <span class="p-src">Regra 60 / 30 / 10</span>
+      </div>
+      <div class="p-card">
+        <span class="p-idx">02 · CONTRASTE PURO</span>
+        <h3>Hierarquia por Tipografia</h3>
+        <p>Em vez de caixas coloridas, a distinção de status e prioridade acontece por peso tipográfico, bordas sutis de 1px e preenchimento sólido azul ou preto.</p>
+        <span class="p-src">WCAG AAA / AA</span>
+      </div>
+      <div class="p-card">
+        <span class="p-idx">03 · PRECISÃO TABULAR</span>
+        <h3>Dados Alinhados ao Pixel</h3>
+        <p>Todos os indicadores numéricos, durações, distâncias e contadores usam <code>tabular-nums</code> para leitura instantânea em listas e painéis.</p>
+        <span class="p-src">Inter cv11 + tnum</span>
+      </div>
+      <div class="p-card">
+        <span class="p-idx">04 · ERGONOMIA ADAPTATIVA</span>
+        <h3>Densidade Web, Toque Mobile</h3>
+        <p>Raios compactos e atalhos de teclado (<code>Ctrl K</code>) para o gestor no portal; alvos generosos (48dp–56dp) e gestos de confirmação para o motorista.</p>
+        <span class="p-src">orbi-web + orbi-app</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. COMPONENTS -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-title">
+        <span class="sec-num">05 / Componentes</span>
+        <h2>Componentes Unificados (Azul Orbi + Off-White + Preto)</h2>
+      </div>
+      <p>Interface limpa sem excesso de cores secundárias.</p>
+    </div>
+
+    <div class="comp-grid">
+      <!-- Orbi Web Portal Components -->
+      <div class="comp-box">
+        <div class="comp-box-head">
+          <h3>Orbi Web · Portal de Operações</h3>
+          <span>#FFFFFF sobre #F7F7F5 · Destaque #2557D6</span>
+        </div>
+
+        <div>
+          <div class="sub-label">Botões & Busca Rápida</div>
+          <div class="row">
+            <button class="btn primary">
+              <svg class="ic sm" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Nova rota
+            </button>
+            <button class="btn dark">Otimizar VRP</button>
+            <button class="btn ghost">Atualizar</button>
+            <button class="btn soft sm">Exportar CSV</button>
+            <div class="input-demo">
+              <svg class="ic sm" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+              <span>Buscar rotas, motoristas…</span>
+              <kbd>Ctrl K</kbd>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="sub-label">Badges Minimalistas & Filter Chips</div>
+          <div class="row" style="margin-bottom:8px;">
+            <span class="badge blue">Em andamento</span>
+            <span class="badge dark">Concluída</span>
+            <span class="badge neutral">A iniciar</span>
+            <span class="badge outline">Pendente</span>
+          </div>
+          <div class="row">
+            <span class="chip on">Todas <em>24</em></span>
+            <span class="chip">Em andamento <em>8</em></span>
+            <span class="chip">Concluídas <em>16</em></span>
+          </div>
+        </div>
+
+        <div>
+          <div class="sub-label">Faixa de KPIs Tabulares (.kpi-grid)</div>
+          <div class="kpi-strip">
+            <div class="kpi-cell">
+              <div class="k-top"><span>Rotas ativas</span><b>75%</b></div>
+              <div class="k-val">18 <small>/ 24</small></div>
+              <span class="bar"><i style="width:75%"></i></span>
+            </div>
+            <div class="kpi-cell">
+              <div class="k-top"><span>Entregas concluídas</span><b>94,2%</b></div>
+              <div class="k-val">142 <small>de 151</small></div>
+              <span class="bar"><i style="width:94%; background:#0A0A0A;"></i></span>
+            </div>
+            <div class="kpi-cell">
+              <div class="k-top"><span>Economia VRP</span><b>2-Opt+TS</b></div>
+              <div class="k-val">-18,4 <small>km/rota</small></div>
+              <span class="bar"><i style="width:82%"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orbi App Mobile Components -->
+      <div class="comp-box">
+        <div class="comp-box-head">
+          <h3>Orbi App · Navegação Mobile</h3>
+          <span>Preto Carbono #0A0A0A + Azul Orbi #2557D6</span>
+        </div>
+
+        <div class="m3-surface">
+          <!-- Maneuver Banner -->
+          <div class="m3-maneuver">
+            <div class="turn-box">
+              <svg class="ic" style="width:22px;height:22px" viewBox="0 0 24 24"><path d="M15 7h6v6"/><path d="M3 17 9 11l4 4 8-8"/></svg>
+            </div>
+            <div class="m-main">
+              <b>Av. Presidente Wilson, 1420</b>
+              <small class="tnum">Parada #03 · 1,2 km · ~4 min</small>
+            </div>
+            <span class="gps-badge"><i></i>GPS</span>
+          </div>
+
+          <!-- Route Card M3 -->
+          <div class="m3-route-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <b class="tnum" style="font-size:16.5px; color:#0A0A0A;">ROTA-SANTOS-01</b>
+                <div class="tnum" style="font-size:12.5px; color:#666666;">12 paradas · ~48 min · 8/12 concluídas</div>
+              </div>
+              <span class="badge blue">Ativa</span>
+            </div>
+            <span class="bar" style="height:5px;"><i style="width:66%;"></i></span>
+            <button class="m3-btn-56">
+              <svg class="ic" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg>
+              Continuar rota
+            </button>
+          </div>
+
+          <!-- Navigation Gesture Controls -->
+          <div class="m3-gesture-row">
+            <div class="m3-slide-track">
+              <span class="m3-slide-thumb">
+                <svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+              </span>
+              <span>Deslize para confirmar entrega</span>
+            </div>
+            <span class="m3-hold-btn">Opções (3s)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. ICONS -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-title">
+        <span class="sec-num">06 / Iconografia</span>
+        <h2>Ícones Lineares Monocromáticos (24×24 · Stroke 1.75px)</h2>
+      </div>
+      <p>Traço limpo em Preto Carbono (<code>#0A0A0A</code>) com estado ativo em Azul Orbi (<code>#2557D6</code>).</p>
+    </div>
+
+    <div class="icon-grid">
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>grid</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/><path d="M12 12 19 5"/></svg><span>radar</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H16a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h7.5"/></svg><span>route</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 9h4l3 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg><span>truck</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg><span>pin</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6.5 6.5 0 0 1 3.5 6"/></svg><span>users</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></svg><span>alert</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg><span>chart</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>bars</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg><span>box</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>clock</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="M12 8v4M12 16h.01"/></svg><span>shield</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg><span>zap</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><span>check</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></svg><span>skip</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg><span>xcircle</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg><span>search</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span>bell</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg><span>target</span></div>
+      <div class="ic-tile"><svg class="ic" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8"/><path d="M21 3v5h-5"/></svg><span>refresh</span></div>
+    </div>
+  </section>
+
+  <!-- 8. WORDMARKS & LOCKUPS -->
+  <section class="sec">
+    <div class="sec-head">
+      <div class="sec-title">
+        <span class="sec-num">07 / Wordmarks · Lockups</span>
+        <h2>Assinaturas da Marca</h2>
+      </div>
+      <p>Aplicações em fundo claro (Off-White / Branco) e fundo escuro (Preto Carbono).</p>
+    </div>
+
+    <div class="wm-grid">
+      <div class="wm-card">
+        <div class="wm-lockup">
+          <span class="brand-logo" style="width:40px;height:40px;border-radius:9px;">
+            <svg viewBox="31 31 46 46" style="width:26px;height:26px;">
+              <circle cx="54" cy="54" r="17" fill="none" stroke="currentColor" stroke-width="4.5" />
+              <circle cx="54" cy="54" r="6.5" fill="currentColor" />
+              <circle cx="67.5" cy="40.5" r="4.5" fill="currentColor" />
+            </svg>
+          </span>
+          <div>
+            <span class="wm-title">Orbi</span>
+            <span class="wm-sub">Logistics & Navigation</span>
+          </div>
+        </div>
+        <p class="wm-note">Assinatura principal com símbolo azul (<code>#2557D6</code>) e tipografia em Preto Carbono (<code>#0A0A0A</code>).</p>
+        <span class="wm-tag">Mark + Wordmark · Light</span>
+      </div>
+
+      <div class="wm-card">
+        <div class="wm-lockup">
+          <span class="wm-title" style="letter-spacing: 0.04em;">ORBI<span style="font-weight:300; color:var(--muted);">PORTAL</span></span>
+        </div>
+        <p class="wm-note">Lockup tipográfico minimalista para cabeçalhos e relatórios executivos.</p>
+        <span class="wm-tag">Split-Weight Lockup · Monochrome</span>
+      </div>
+
+      <div class="wm-card dark">
+        <div class="wm-lockup">
+          <span class="brand-logo" style="width:40px;height:40px;border-radius:9px;background:#2557D6;">
+            <svg viewBox="31 31 46 46" style="width:26px;height:26px;">
+              <circle cx="54" cy="54" r="17" fill="none" stroke="#FFFFFF" stroke-width="4.5" />
+              <circle cx="54" cy="54" r="6.5" fill="#FFFFFF" />
+              <circle cx="67.5" cy="40.5" r="4.5" fill="#FFFFFF" />
+            </svg>
+          </span>
+          <div>
+            <span class="wm-title" style="color:#FFFFFF;">ORBI<span style="color:#2557D6;">APP</span></span>
+            <span class="wm-sub" style="color:#999999;">Android · Motorista</span>
+          </div>
+        </div>
+        <p class="wm-note" style="color:#999999;">Versão de alto contraste sobre superfície Preto Carbono (<code>#0A0A0A</code>).</p>
+        <span class="wm-tag" style="color:#666666;">Accent Lockup · Carbon Black</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. FOOTER -->
+  <footer class="ds-foot">
+    <span>Orbi Design System · Minimal Blue & Monochrome Edition</span>
+    <span>design/design-system.html · design/brand-book-a4.pdf</span>
+  </footer>
+
+</div>
+</body>
+</html>

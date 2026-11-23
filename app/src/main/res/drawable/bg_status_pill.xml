@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Fundo neutro para pílulas de status. A cor é aplicada por View via backgroundTintList. -->
+<!-- Fundo neutro em pílula para badges de status (preenchimento e borda aplicados em StatusStyles). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <corners android:radius="100dp" />
+    <corners android:radius="999dp" />
     <solid android:color="@android:color/white" />
 </shape>

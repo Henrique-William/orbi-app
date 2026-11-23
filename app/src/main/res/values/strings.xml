@@ -171,14 +171,32 @@
     <!-- Novos botões Flat Design e Gestos -->
     <string name="slide_to_deliver">Deslize para concluir entrega</string>
     <string name="btn_hold_skip">Pular</string>
-    <string name="btn_hold_skip_hint">Segure 3s para pular</string>
+    <string name="btn_hold_skip_hint">Segure 1s para pular</string>
     <string name="btn_hold_cancel">Cancelar</string>
-    <string name="btn_hold_cancel_hint">Segure 3s para cancelar</string>
+    <string name="btn_hold_cancel_hint">Segure 1s para cancelar</string>
     <string name="reason_schedule_incompatible">Horário de entrega incompatível</string>
     <string name="cd_expand_sheet">Arraste ou toque para expandir informações da rota</string>
     <string name="nav_route_progress_summary">Parada %1$d de %2$d · %3$d concluídas</string>
     <string name="nav_next_stop_preview">Próxima: #%1$02d — %2$s</string>
     <string name="nav_last_stop_preview">Última parada pendente desta rota</string>
+    <string name="nav_next_maneuver_label">A seguir</string>
+    <string name="nav_recipient_label">Cliente / Destinatário</string>
+    <string name="nav_phone_missing">Telefone do destinatário não cadastrado.</string>
+    <string name="nav_speed_default">0</string>
+    <string name="nav_speed_unit">km/h</string>
+    <string name="nav_duration_placeholder">-- min</string>
+    <string name="nav_distance_placeholder">-- km</string>
+    <string name="nav_arrival_placeholder">--:--</string>
+    <string name="nav_metric_separator">·</string>
+    <string name="nav_stop_marker_title">Parada %1$s</string>
+    <string name="nav_maneuver_follow_street">Siga em frente na %1$s</string>
+    <string name="nav_step_distance_m">Em %1$d m</string>
+    <string name="nav_step_distance_km">Em %1$.1f km</string>
+    <string name="nav_distance_m">%1$d m</string>
+    <string name="nav_distance_km">%1$.1f km</string>
+    <string name="nav_duration_min">%1$d min</string>
+    <string name="nav_route_completed_next">Rota concluída! Iniciando próxima rota: %1$s</string>
+    <string name="error_sync_action_failed">Não foi possível sincronizar a ação com o servidor.</string>
 
     <!-- Fim da rota -->
     <string name="all_stops_handled_title">Todas as paradas finalizadas</string>

@@ -99,19 +99,7 @@
             android:textColor="?attr/colorOnSurfaceVariant"
             tools:text="Rua das Flores, 123 · Centro, São Paulo" />
 
-        <!-- Telefone: toque para ligar (alvo mínimo de 48dp) -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnPhone"
-            style="@style/Widget.Orbi.Button.Text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="-12dp"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:textAppearance="?attr/textAppearanceLabelLarge"
-            app:icon="@drawable/ic_phone"
-            app:iconSize="18dp"
-            tools:text="(11) 98765-4321" />
+        <!-- Telefone removido da lista de paradas da ordem de entrega -->
 
         <!-- Justificativa (pulado / cancelado) -->
         <TextView

@@ -2,6 +2,11 @@ package com.orbi.orbi_app.ui.map;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.RectF;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -10,12 +15,9 @@ import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
-import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,22 +25,38 @@ import androidx.core.content.ContextCompat;
 
 import com.orbi.orbi_app.R;
 
+/**
+ * Slide-to-confirm (Orbi Design System · .m3-slide-track).
+ * Ao arrastar o thumb da esquerda para a direita, uma caixa sólida acompanha o dedo
+ * e preenche a trilha. Soltando após 90% do curso, a ação é confirmada.
+ */
 public class HorizontalSlideToConfirmView extends FrameLayout {
 
     public interface OnSlideConfirmedListener {
         void onConfirmed();
     }
 
-    private View trackView;
-    private View progressFillView;
+    private static final float CONFIRM_THRESHOLD = 0.9f;
+
+    private final Paint trackPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint trackStrokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint textOnFillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF trackRect = new RectF();
+    private final RectF fillRect = new RectF();
+    private final Path trackClip = new Path();
+
     private FrameLayout thumbView;
-    private ImageView ivThumbIcon;
-    private TextView tvSlideHint;
+    private String label;
+    private float marginPx;
+    private float strokePx;
 
     private float startRawX = 0f;
     private float currentTranslationX = 0f;
     private boolean isArmed = false;
     private boolean isDragging = false;
+    private boolean isLocked = false;
     private ValueAnimator slideAnimator;
     private OnSlideConfirmedListener confirmedListener;
 
@@ -58,56 +76,46 @@ public class HorizontalSlideToConfirmView extends FrameLayout {
     }
 
     private void init(Context context) {
+        setWillNotDraw(false);
+        setClickable(true);
         float density = getResources().getDisplayMetrics().density;
-        int heightPx = (int) (56 * density);
-        int thumbSizePx = (int) (48 * density);
-        int marginPx = (int) (4 * density);
+        marginPx = 4f * density;
+        strokePx = 1f * density;
 
-        // 1. Trilha de fundo (Flat Design)
-        trackView = new View(context);
-        trackView.setBackgroundResource(R.drawable.bg_flat_slide_track);
-        LayoutParams trackParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, heightPx);
-        addView(trackView, trackParams);
+        int ink = ContextCompat.getColor(context, R.color.nav_action_complete);
+        int surface = ContextCompat.getColor(context, R.color.surface);
 
-        // 1b. Preenchimento progressivo que acompanha o dedo até o limite
-        progressFillView = new View(context);
-        progressFillView.setBackgroundResource(R.drawable.bg_flat_slide_thumb);
-        progressFillView.setAlpha(0.22f);
-        LayoutParams fillParams = new LayoutParams(thumbSizePx, thumbSizePx);
-        fillParams.gravity = Gravity.CENTER_VERTICAL | Gravity.START;
-        fillParams.leftMargin = marginPx;
-        addView(progressFillView, fillParams);
+        trackPaint.setColor(ContextCompat.getColor(context, R.color.surface_container));
+        trackStrokePaint.setStyle(Paint.Style.STROKE);
+        trackStrokePaint.setStrokeWidth(strokePx);
+        trackStrokePaint.setColor(ContextCompat.getColor(context, R.color.outline_variant));
+        fillPaint.setColor(ink);
 
-        // 2. Texto informativo centralizado
-        tvSlideHint = new TextView(context);
-        tvSlideHint.setText(R.string.slide_to_deliver);
-        tvSlideHint.setTextColor(ContextCompat.getColor(context, R.color.nav_action_complete));
-        tvSlideHint.setTextSize(14f);
-        tvSlideHint.setTypeface(null, android.graphics.Typeface.BOLD);
-        tvSlideHint.setGravity(Gravity.CENTER);
-        LayoutParams textParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        textParams.gravity = Gravity.CENTER;
-        addView(tvSlideHint, textParams);
+        textPaint.setColor(ContextCompat.getColor(context, R.color.ink_secondary));
+        textPaint.setTextSize(14f * getResources().getDisplayMetrics().scaledDensity);
+        textPaint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textOnFillPaint.set(textPaint);
+        textOnFillPaint.setColor(surface);
 
-        // 3. Thumb / Botão deslizante
+        label = context.getString(R.string.slide_to_deliver);
+        setContentDescription(label);
+
+        // Thumb: círculo claro com seta, que fica sobre a caixa escura de preenchimento
         thumbView = new FrameLayout(context);
         thumbView.setBackgroundResource(R.drawable.bg_flat_slide_thumb);
         thumbView.setElevation(2f * density);
+        ImageView icon = new ImageView(context);
+        icon.setImageResource(R.drawable.ic_chevron_right);
+        icon.setColorFilter(ink);
+        int iconSize = (int) (24 * density);
+        thumbView.addView(icon, new LayoutParams(iconSize, iconSize, Gravity.CENTER));
 
-        ivThumbIcon = new ImageView(context);
-        ivThumbIcon.setImageResource(R.drawable.ic_check);
-        ivThumbIcon.setColorFilter(ContextCompat.getColor(context, R.color.white));
-        int iconSizePx = (int) (24 * density);
-        LayoutParams iconParams = new LayoutParams(iconSizePx, iconSizePx, Gravity.CENTER);
-        thumbView.addView(ivThumbIcon, iconParams);
-
-        LayoutParams thumbParams = new LayoutParams(thumbSizePx, thumbSizePx);
+        int thumbSize = (int) (48 * density);
+        LayoutParams thumbParams = new LayoutParams(thumbSize, thumbSize);
         thumbParams.gravity = Gravity.CENTER_VERTICAL | Gravity.START;
-        thumbParams.leftMargin = marginPx;
+        thumbParams.leftMargin = (int) marginPx;
         addView(thumbView, thumbParams);
-
-        setClickable(true);
-        setupTouchListener();
     }
 
     public void setOnSlideConfirmedListener(OnSlideConfirmedListener listener) {
@@ -115,135 +123,137 @@ public class HorizontalSlideToConfirmView extends FrameLayout {
     }
 
     public void setLabel(String label) {
-        if (tvSlideHint != null && label != null) {
-            tvSlideHint.setText(label);
+        if (label != null) {
+            this.label = label;
+            setContentDescription(label);
+            invalidate();
         }
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        trackRect.set(0, 0, w, h);
+        trackClip.reset();
+        trackClip.addRoundRect(trackRect, h / 2f, h / 2f, Path.Direction.CW);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        float h = getHeight();
+        float r = h / 2f;
+        canvas.drawRoundRect(trackRect, r, r, trackPaint);
+
+        float textX = getWidth() / 2f + thumbView.getWidth() / 4f;
+        float textY = h / 2f - (textPaint.descent() + textPaint.ascent()) / 2f;
+        float maxT = Math.max(1f, getMaxTranslation());
+        textPaint.setAlpha((int) (255 * Math.max(0.35f, 1f - currentTranslationX / maxT)));
+        canvas.drawText(label, textX, textY, textPaint);
+
+        // Caixa que acompanha o dedo: vai da borda esquerda até a borda direita do thumb
+        float fillRight = thumbView.getLeft() + currentTranslationX + thumbView.getWidth() + marginPx;
+        if (currentTranslationX > 0.5f) {
+            canvas.save();
+            canvas.clipPath(trackClip);
+            fillRect.set(0, 0, fillRight, h);
+            canvas.drawRoundRect(fillRect, r, r, fillPaint);
+            canvas.clipRect(fillRect);
+            canvas.drawText(label, textX, textY, textOnFillPaint);
+            canvas.restore();
+        }
+
+        float half = strokePx / 2f;
+        canvas.drawRoundRect(half, half, getWidth() - half, h - half, r - half, r - half, trackStrokePaint);
     }
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (ev.getActionMasked() == MotionEvent.ACTION_DOWN) {
-            // Permite iniciar o arraste tocando no thumb ou na metade esquerda da barra
-            float touchX = ev.getX();
-            float thumbRight = thumbView.getLeft() + currentTranslationX + thumbView.getWidth() + (24f * getResources().getDisplayMetrics().density);
-            if (touchX <= thumbRight) {
-                return true;
-            }
-        }
-        return super.onInterceptTouchEvent(ev);
+        return true;
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return handleSlideMotion(event);
-    }
-
-    private void setupTouchListener() {
-        thumbView.setOnTouchListener((v, event) -> handleSlideMotion(event));
-    }
-
-    private boolean handleSlideMotion(MotionEvent event) {
-        float maxTranslationX = getMaxTranslation();
-        if (maxTranslationX <= 0) return false;
+        if (isLocked) return true;
+        float maxT = getMaxTranslation();
+        if (maxT <= 0) return true;
 
         switch (event.getActionMasked()) {
-            case MotionEvent.ACTION_DOWN:
-                if (slideAnimator != null && slideAnimator.isRunning()) {
-                    slideAnimator.cancel();
+            case MotionEvent.ACTION_DOWN: {
+                float thumbStart = thumbView.getLeft() + currentTranslationX;
+                float slop = 16f * getResources().getDisplayMetrics().density;
+                if (event.getX() < thumbStart - slop || event.getX() > thumbStart + thumbView.getWidth() + slop) {
+                    // Toque fora do thumb: pequeno "nudge" indicando que é preciso arrastar
+                    nudge();
+                    return true;
                 }
+                if (slideAnimator != null) slideAnimator.cancel();
                 startRawX = event.getRawX() - currentTranslationX;
                 isArmed = false;
                 isDragging = true;
-                if (getParent() != null) {
-                    getParent().requestDisallowInterceptTouchEvent(true);
-                }
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
+                thumbView.animate().scaleX(1.06f).scaleY(1.06f).setDuration(100).start();
                 return true;
-
-            case MotionEvent.ACTION_MOVE:
-                if (!isDragging) return false;
-
-                // Segue exatamente o movimento do dedo entre 0 (limite esquerdo) e maxTranslationX (limite direito)
-                float deltaX = event.getRawX() - startRawX;
-                if (deltaX < 0f) deltaX = 0f;
-                if (deltaX > maxTranslationX) deltaX = maxTranslationX;
-
-                applyThumbTranslation(deltaX, maxTranslationX);
-
-                float progress = deltaX / maxTranslationX;
-                if (progress >= 0.88f) {
-                    if (!isArmed) {
-                        isArmed = true;
-                        triggerHaptic(getContext(), thumbView);
-                    }
-                } else {
-                    isArmed = false;
-                }
+            }
+            case MotionEvent.ACTION_MOVE: {
+                if (!isDragging) return true;
+                float dx = Math.max(0f, Math.min(maxT, event.getRawX() - startRawX));
+                applyTranslation(dx);
+                boolean armedNow = dx / maxT >= CONFIRM_THRESHOLD;
+                if (armedNow && !isArmed) triggerHaptic();
+                isArmed = armedNow;
                 return true;
-
+            }
             case MotionEvent.ACTION_UP:
-                if (getParent() != null) {
-                    getParent().requestDisallowInterceptTouchEvent(false);
-                }
+            case MotionEvent.ACTION_CANCEL: {
+                if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
+                thumbView.animate().scaleX(1f).scaleY(1f).setDuration(100).start();
+                if (!isDragging) return true;
                 isDragging = false;
-
-                if (isArmed) {
-                    triggerHaptic(getContext(), thumbView);
-                    animateThumbTo(maxTranslationX, 120, () -> {
-                        if (confirmedListener != null) {
-                            confirmedListener.onConfirmed();
-                        }
-                        resetSmoothly();
+                if (isArmed && event.getActionMasked() == MotionEvent.ACTION_UP) {
+                    isLocked = true;
+                    animateTo(maxT, 120, () -> {
+                        if (confirmedListener != null) confirmedListener.onConfirmed();
+                        postDelayed(this::resetSmoothly, 350);
                     });
                 } else {
                     resetSmoothly();
                 }
                 return true;
-
-            case MotionEvent.ACTION_CANCEL:
-                if (getParent() != null) {
-                    getParent().requestDisallowInterceptTouchEvent(false);
-                }
-                isDragging = false;
-                isArmed = false;
-                resetSmoothly();
-                return true;
+            }
         }
-        return false;
+        return true;
     }
 
-    private void applyThumbTranslation(float translationX, float maxTranslationX) {
-        currentTranslationX = translationX;
-        thumbView.setTranslationX(translationX);
-
-        if (progressFillView != null) {
-            ViewGroup.LayoutParams lp = progressFillView.getLayoutParams();
-            lp.width = (int) (thumbView.getWidth() + translationX);
-            progressFillView.setLayoutParams(lp);
-        }
-
-        if (maxTranslationX > 0f && tvSlideHint != null) {
-            float progress = translationX / maxTranslationX;
-            tvSlideHint.setAlpha(Math.max(0f, 1f - 1.4f * progress));
-        }
+    private void nudge() {
+        if (isDragging || (slideAnimator != null && slideAnimator.isRunning())) return;
+        float d = 14f * getResources().getDisplayMetrics().density;
+        animateTo(d, 120, () -> animateTo(0f, 220, null));
     }
 
-    private void animateThumbTo(float targetX, long durationMs, Runnable endAction) {
-        if (slideAnimator != null && slideAnimator.isRunning()) {
-            slideAnimator.cancel();
-        }
-        final float maxTranslationX = Math.max(1f, getMaxTranslation());
-        slideAnimator = ValueAnimator.ofFloat(currentTranslationX, targetX);
-        slideAnimator.setDuration(durationMs);
+    private void applyTranslation(float x) {
+        currentTranslationX = x;
+        thumbView.setTranslationX(x);
+        invalidate();
+    }
+
+    private void animateTo(float target, long duration, @Nullable Runnable end) {
+        if (slideAnimator != null) slideAnimator.cancel();
+        slideAnimator = ValueAnimator.ofFloat(currentTranslationX, target);
+        slideAnimator.setDuration(duration);
         slideAnimator.setInterpolator(new DecelerateInterpolator());
-        slideAnimator.addUpdateListener(anim -> {
-            float val = (float) anim.getAnimatedValue();
-            applyThumbTranslation(val, maxTranslationX);
-        });
-        if (endAction != null) {
+        slideAnimator.addUpdateListener(a -> applyTranslation((float) a.getAnimatedValue()));
+        if (end != null) {
             slideAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+                private boolean cancelled = false;
+
+                @Override
+                public void onAnimationCancel(android.animation.Animator animation) {
+                    cancelled = true;
+                }
+
                 @Override
                 public void onAnimationEnd(android.animation.Animator animation) {
-                    endAction.run();
+                    if (!cancelled) end.run();
                 }
             });
         }
@@ -251,28 +261,25 @@ public class HorizontalSlideToConfirmView extends FrameLayout {
     }
 
     private float getMaxTranslation() {
-        float density = getResources().getDisplayMetrics().density;
-        int marginPx = (int) (4 * density);
-        return Math.max(0f, getWidth() - thumbView.getWidth() - (2 * marginPx));
+        return Math.max(0f, getWidth() - thumbView.getWidth() - 2 * marginPx);
     }
 
     public void resetSmoothly() {
         isArmed = false;
-        animateThumbTo(0f, 220, null);
+        isLocked = false;
+        animateTo(0f, 240, null);
     }
 
-    private void triggerHaptic(Context context, View view) {
-        if (view != null) {
-            view.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
-        }
-        if (context == null) return;
+    private void triggerHaptic() {
+        View v = thumbView;
+        v.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
         try {
-            Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+            Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
             if (vibrator != null && vibrator.hasVibrator()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(VibrationEffect.createOneShot(120, VibrationEffect.DEFAULT_AMPLITUDE));
+                    vibrator.vibrate(VibrationEffect.createOneShot(40, VibrationEffect.DEFAULT_AMPLITUDE));
                 } else {
-                    vibrator.vibrate(120);
+                    vibrator.vibrate(40);
                 }
             }
         } catch (Exception ignored) {

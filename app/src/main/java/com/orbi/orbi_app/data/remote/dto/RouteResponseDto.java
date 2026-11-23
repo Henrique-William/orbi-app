@@ -7,6 +7,9 @@ public class RouteResponseDto {
     @SerializedName("id")
     private Long id;
 
+    @SerializedName("name")
+    private String name;
+
     @SerializedName("driverId")
     private DriverInfoDto driverInfo;
 
@@ -39,6 +42,10 @@ public class RouteResponseDto {
 
     public Long getId() {
         return id;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public DriverInfoDto getDriverInfo() {

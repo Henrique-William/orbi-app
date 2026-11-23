@@ -1,26 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Orbi Design System — Formas, componentes e estilos de texto reutilizáveis -->
-<resources>
+<!-- Orbi Design System — Formas, componentes e estilos tipográficos -->
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ========== Formas ========== -->
+    <!-- Formas (design-system.html) -->
+    <!-- 6dp: chips e botões compactos (radius-sm) -->
     <style name="ShapeAppearance.Orbi.Small" parent="ShapeAppearance.Material3.Corner.Small">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">6dp</item>
+    </style>
+
+    <!-- 10dp: turn-box e campos de entrada (radius) -->
+    <style name="ShapeAppearance.Orbi.Radius10" parent="ShapeAppearance.Material3.Corner.Small">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10dp</item>
+    </style>
+
+    <!-- 12dp: botões principais de ação (.m3-btn-56) -->
+    <style name="ShapeAppearance.Orbi.Medium" parent="ShapeAppearance.Material3.Corner.Medium">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">12dp</item>
     </style>
 
-    <style name="ShapeAppearance.Orbi.Medium" parent="ShapeAppearance.Material3.Corner.Medium">
+    <!-- 16dp: banner de manobra (.m3-maneuver), diálogos e cards flutuantes -->
+    <style name="ShapeAppearance.Orbi.Radius16" parent="ShapeAppearance.Material3.Corner.Medium">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
     </style>
 
+    <!-- 18dp: cards de rota e containers principais (.m3-route-card) -->
     <style name="ShapeAppearance.Orbi.Large" parent="ShapeAppearance.Material3.Corner.Large">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">24dp</item>
+        <item name="cornerSize">18dp</item>
     </style>
 
+    <!-- 20dp: superfícies amplas (radius-lg) -->
     <style name="ShapeAppearance.Orbi.ExtraLarge" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">28dp</item>
+        <item name="cornerSize">20dp</item>
     </style>
 
     <style name="ShapeAppearance.Orbi.Full" parent="">
@@ -31,13 +47,133 @@
     <!-- Painel inferior ancorado (somente cantos superiores arredondados) -->
     <style name="ShapeAppearance.Orbi.BottomSheet" parent="">
         <item name="cornerFamily">rounded</item>
-        <item name="cornerSizeTopLeft">28dp</item>
-        <item name="cornerSizeTopRight">28dp</item>
+        <item name="cornerSizeTopLeft">20dp</item>
+        <item name="cornerSizeTopRight">20dp</item>
         <item name="cornerSizeBottomLeft">0dp</item>
         <item name="cornerSizeBottomRight">0dp</item>
     </style>
 
-    <!-- Rótulo das zonas de ação Drag-to-Confirm na navegação -->
+    <!-- ========== Tipografia (Inter + JetBrains Mono + tnum) ========== -->
+    <style name="TextAppearance.Orbi.Base" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.Tabular" parent="TextAppearance.Orbi.Base">
+        <item name="android:fontFeatureSettings">tnum, cv11, ss01</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.Mono" parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/jetbrains_mono</item>
+        <item name="android:fontFamily">@font/jetbrains_mono</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.HeadlineMedium" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.025</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.HeadlineSmall" parent="TextAppearance.Material3.HeadlineSmall">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.TitleLarge" parent="TextAppearance.Material3.TitleLarge">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.015</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.TitleMedium" parent="TextAppearance.Material3.TitleMedium">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textFontWeight" tools:targetApi="p">600</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.TitleSmall" parent="TextAppearance.Material3.TitleSmall">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textFontWeight" tools:targetApi="p">500</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.BodySmall" parent="TextAppearance.Material3.BodySmall">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.LabelLarge" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textFontWeight" tools:targetApi="p">600</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.LabelMedium" parent="TextAppearance.Material3.LabelMedium">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textFontWeight" tools:targetApi="p">500</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.LabelSmall" parent="TextAppearance.Material3.LabelSmall">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.Button" parent="TextAppearance.Material3.LabelLarge">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textFontWeight" tools:targetApi="p">600</item>
+        <item name="android:letterSpacing">0.0</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.DialogTitle" parent="MaterialAlertDialog.Material3.Title.Text">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/ink_primary</item>
+    </style>
+
+    <style name="TextAppearance.Orbi.DialogBody" parent="MaterialAlertDialog.Material3.Body.Text">
+        <item name="fontFamily">@font/inter</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">cv11, ss01</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/on_surface_variant</item>
+    </style>
+
+    <!-- Rótulo das zonas de ação na navegação -->
     <style name="Widget.Orbi.NavActionLabel" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -47,11 +183,15 @@
     </style>
 
     <!-- ========== Botões ========== -->
-    <!-- Botão principal: 56dp de altura para alvo de toque generoso (uso em movimento / luvas) -->
+    <!-- Botão principal: 56dp de altura, 12dp de raio, elevação plana -->
     <style name="Widget.Orbi.Button" parent="Widget.Material3.Button">
         <item name="android:minHeight">56dp</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+        <item name="backgroundTint">?attr/colorPrimary</item>
+        <item name="android:textColor">?attr/colorOnPrimary</item>
         <item name="android:textAppearance">@style/TextAppearance.Orbi.Button</item>
         <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Medium</item>
         <item name="iconGravity">textStart</item>
@@ -59,10 +199,20 @@
         <item name="iconSize">20dp</item>
     </style>
 
+    <style name="Widget.Orbi.Button.Dark" parent="Widget.Orbi.Button">
+        <item name="backgroundTint">@color/badge_dark_bg</item>
+        <item name="android:textColor">@color/badge_dark_fg</item>
+        <item name="iconTint">@color/badge_dark_fg</item>
+    </style>
+
     <style name="Widget.Orbi.Button.Tonal" parent="Widget.Material3.Button.TonalButton">
         <item name="android:minHeight">56dp</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
+        <item name="backgroundTint">@color/primary_soft</item>
+        <item name="strokeColor">@color/primary_line</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:textColor">@color/primary_text</item>
         <item name="android:textAppearance">@style/TextAppearance.Orbi.Button</item>
         <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Medium</item>
         <item name="iconGravity">textStart</item>
@@ -74,9 +224,12 @@
         <item name="android:minHeight">56dp</item>
         <item name="android:insetTop">0dp</item>
         <item name="android:insetBottom">0dp</item>
+        <item name="backgroundTint">?attr/colorSurfaceContainerLowest</item>
+        <item name="strokeColor">@color/card_stroke</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="android:textAppearance">@style/TextAppearance.Orbi.Button</item>
         <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Medium</item>
-        <item name="strokeColor">?attr/colorOutlineVariant</item>
         <item name="iconGravity">textStart</item>
         <item name="iconPadding">8dp</item>
         <item name="iconSize">20dp</item>
@@ -84,10 +237,19 @@
 
     <style name="Widget.Orbi.Button.Text" parent="Widget.Material3.Button.TextButton">
         <item name="android:minHeight">48dp</item>
+        <item name="android:textColor">@color/primary_text</item>
         <item name="android:textAppearance">@style/TextAppearance.Orbi.Button</item>
         <item name="iconGravity">textStart</item>
         <item name="iconPadding">8dp</item>
         <item name="iconSize">20dp</item>
+    </style>
+
+    <style name="Widget.Orbi.Button.DialogPositive" parent="Widget.Orbi.Button.Text">
+        <item name="android:textColor">@color/primary_text</item>
+    </style>
+
+    <style name="Widget.Orbi.Button.DialogNegative" parent="Widget.Orbi.Button.Text">
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
     <!-- Botão somente-ícone (48x48dp, alvo de toque acessível) -->
@@ -101,55 +263,80 @@
     <style name="Widget.Orbi.IconButton.Tonal" parent="Widget.Material3.Button.IconButton.Filled.Tonal">
         <item name="android:minWidth">48dp</item>
         <item name="android:minHeight">48dp</item>
+        <item name="backgroundTint">@color/primary_soft</item>
+        <item name="iconTint">@color/primary_text</item>
         <item name="iconSize">24dp</item>
     </style>
 
-    <!-- ========== Cards ========== -->
+    <!-- ========== Cards (borda hairline de 1dp) ========== -->
     <style name="Widget.Orbi.Card" parent="Widget.Material3.CardView.Outlined">
         <item name="cardBackgroundColor">?attr/colorSurfaceContainerLowest</item>
-        <item name="strokeColor">?attr/colorOutlineVariant</item>
+        <item name="strokeColor">@color/card_stroke</item>
         <item name="strokeWidth">1dp</item>
+        <item name="cardElevation">0dp</item>
         <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Large</item>
     </style>
 
-    <!-- Card flutuante sobre o mapa -->
-    <style name="Widget.Orbi.Card.Floating" parent="Widget.Material3.CardView.Elevated">
+    <!-- Card flutuante sobre o mapa (borda definida para contraste no modo escuro) -->
+    <style name="Widget.Orbi.Card.Floating" parent="Widget.Material3.CardView.Outlined">
         <item name="cardBackgroundColor">?attr/colorSurfaceContainerLowest</item>
-        <item name="cardElevation">6dp</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.Orbi.ExtraLarge</item>
+        <item name="strokeColor">@color/map_overlay_stroke</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Radius16</item>
     </style>
 
     <!-- ========== Campos de texto ========== -->
     <style name="Widget.Orbi.TextInputLayout" parent="Widget.Material3.TextInputLayout.OutlinedBox">
-        <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Small</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Radius10</item>
+        <item name="boxBackgroundColor">?attr/colorSurfaceContainerLowest</item>
         <item name="boxStrokeColor">@color/selector_input_stroke</item>
+        <item name="boxStrokeWidth">1dp</item>
+        <item name="boxStrokeWidthFocused">1.5dp</item>
+        <item name="hintTextColor">@color/primary_text</item>
         <item name="startIconTint">?attr/colorOnSurfaceVariant</item>
         <item name="endIconTint">?attr/colorOnSurfaceVariant</item>
     </style>
 
-    <!-- ========== Chips ========== -->
+    <!-- ========== Chips (.chip & .chip.on) ========== -->
     <style name="Widget.Orbi.Chip.Filter" parent="Widget.Material3.Chip.Filter">
         <item name="android:minHeight">48dp</item>
         <item name="chipMinTouchTargetSize">48dp</item>
-        <item name="android:textAppearance">?attr/textAppearanceLabelLarge</item>
+        <item name="chipCornerRadius">6dp</item>
         <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Small</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipStrokeColor">@color/selector_chip_stroke</item>
+        <item name="chipBackgroundColor">@color/selector_chip_bg</item>
+        <item name="chipSurfaceColor">@android:color/transparent</item>
+        <item name="checkedIconVisible">false</item>
+        <item name="android:textColor">@color/selector_chip_text</item>
+        <item name="android:textAppearance">?attr/textAppearanceLabelLarge</item>
     </style>
 
-    <!-- ========== Textos ========== -->
-    <style name="TextAppearance.Orbi.Button" parent="TextAppearance.Material3.LabelLarge">
-        <item name="android:textSize">16sp</item>
-        <item name="android:letterSpacing">0.01</item>
+    <style name="Widget.Orbi.Chip.Assist" parent="Widget.Material3.Chip.Assist">
+        <item name="android:minHeight">48dp</item>
+        <item name="chipMinTouchTargetSize">48dp</item>
+        <item name="chipCornerRadius">6dp</item>
+        <item name="shapeAppearance">@style/ShapeAppearance.Orbi.Small</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipStrokeColor">@color/card_stroke</item>
+        <item name="chipBackgroundColor">?attr/colorSurfaceContainerLowest</item>
+        <item name="chipSurfaceColor">@android:color/transparent</item>
+        <item name="android:textColor">@color/ink_secondary</item>
+        <item name="android:textAppearance">?attr/textAppearanceLabelLarge</item>
     </style>
 
-    <!-- Pílula de status (fundo e cor definidos em código via StatusStyles) -->
+    <!-- Pílula de status (.badge — fundo, borda 1dp e ponto aplicados em StatusStyles) -->
     <style name="Widget.Orbi.StatusPill" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">24dp</item>
+        <item name="android:gravity">center_vertical</item>
         <item name="android:background">@drawable/bg_status_pill</item>
-        <item name="android:paddingStart">12dp</item>
-        <item name="android:paddingEnd">12dp</item>
-        <item name="android:paddingTop">4dp</item>
-        <item name="android:paddingBottom">4dp</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:paddingTop">3dp</item>
+        <item name="android:paddingBottom">3dp</item>
         <item name="android:textAppearance">?attr/textAppearanceLabelMedium</item>
         <item name="android:maxLines">1</item>
     </style>
@@ -163,13 +350,15 @@
         <item name="android:accessibilityHeading">true</item>
     </style>
 
-    <!-- Valor grande de métricas (ex.: "8", "42 min") -->
+    <!-- Valor grande de métricas (ex.: "8", "42 min") com precisão tabular -->
     <style name="Widget.Orbi.StatValue" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:textAppearance">?attr/textAppearanceTitleLarge</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
-        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:fontFeatureSettings">tnum, cv11, ss01</item>
+        <item name="android:letterSpacing">-0.025</item>
     </style>
 
     <style name="Widget.Orbi.StatLabel" parent="">
@@ -196,11 +385,11 @@
         <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     </style>
 
-    <!-- Indicador de progresso linear arredondado -->
+    <!-- Indicador de progresso linear arredondado (5dp track) -->
     <style name="Widget.Orbi.LinearProgress" parent="Widget.Material3.LinearProgressIndicator">
-        <item name="trackThickness">6dp</item>
+        <item name="trackThickness">5dp</item>
         <item name="trackCornerRadius">3dp</item>
-        <item name="trackColor">?attr/colorSurfaceContainerHighest</item>
+        <item name="trackColor">?attr/colorSurfaceContainer</item>
         <item name="indicatorColor">?attr/colorPrimary</item>
         <item name="trackStopIndicatorSize">0dp</item>
     </style>

@@ -281,6 +281,20 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         btnRadialSkip = findViewById(R.id.btnRadialSkip);
         btnRadialCancel = findViewById(R.id.btnRadialCancel);
         slideConcludeDelivery = findViewById(R.id.slideConcludeDelivery);
+
+        blockTouchPassThrough(cardBottomControls);
+        blockTouchPassThrough(cardTopBanner);
+        blockTouchPassThrough(findViewById(R.id.cardSpeedometer));
+    }
+
+    /**
+     * Impede que toques em áreas "vazias" dos painéis sobrepostos (padding, textos, divisores)
+     * atravessem a UI e movam o mapa por baixo. Os filhos interativos continuam recebendo
+     * os eventos normalmente, pois o listener só é acionado quando nenhum filho consome o toque.
+     */
+    private void blockTouchPassThrough(View overlay) {
+        if (overlay == null) return;
+        overlay.setOnTouchListener((v, event) -> true);
     }
 
     private void setupWindowInsets() {
@@ -335,8 +349,12 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     }
 
     private void setGpsStatus(@androidx.annotation.StringRes int textRes, int dotColor) {
-        tvGpsStatus.setText(textRes);
-        viewGpsDot.setBackgroundTintList(android.content.res.ColorStateList.valueOf(dotColor));
+        if (tvGpsStatus != null) {
+            tvGpsStatus.setText(textRes);
+        }
+        if (viewGpsDot != null) {
+            viewGpsDot.setBackgroundTintList(android.content.res.ColorStateList.valueOf(dotColor));
+        }
     }
 
     /**
@@ -814,7 +832,9 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         }
 
         // 2. Atualizar Banner Superior (Uber Driver Maneuver)
-        tvNavHeading.setText(getString(R.string.nav_heading_to, currentWaypoint.getSequenceOrder()) + " · " + currentWaypoint.getRecipientName());
+        if (tvNavHeading != null) {
+            tvNavHeading.setText(getString(R.string.nav_heading_to, currentWaypoint.getSequenceOrder()) + " · " + currentWaypoint.getRecipientName());
+        }
         tvManeuverInstruction.setText(getString(R.string.nav_maneuver_follow));
         ivManeuverIcon.setImageResource(R.drawable.ic_turn_straight);
         tvManeuverDistance.setText(R.string.nav_calculating);
@@ -1066,11 +1086,11 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     private void recenterOnDriver() {
         if (googleMap != null && currentDriverLatLng != null) {
             isOverviewMode = false;
-            LatLng lookAheadTarget = computeOffsetLatLng(currentDriverLatLng, 45.0, currentAzimuth);
+            LatLng lookAheadTarget = computeOffsetLatLng(currentDriverLatLng, 80.0, currentAzimuth);
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .target(lookAheadTarget)
-                    .zoom(18.2f)
-                    .tilt(52.0f)
+                    .zoom(15.8f)
+                    .tilt(45.0f)
                     .bearing(currentAzimuth)
                     .build();
             googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), 550, null);
@@ -1570,8 +1590,7 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
         }
 
         currentRoutePoints = trimmedPoints;
-        if (routePolyline != null && routePolylineCasing != null) {
-            routePolylineCasing.setPoints(trimmedPoints);
+        if (routePolyline != null) {
             routePolyline.setPoints(trimmedPoints);
         } else {
             drawSolidPolyline(trimmedPoints);
@@ -1743,9 +1762,9 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
     }
 
     /**
-     * Traça a rota com alto contraste estilo Uber Driver / Google Maps Navigation:
-     * contorno azul-marinho escuro espesso (#0A2E70) + núcleo azul intenso (#1A73E8)
-     * + linha pontilhada de calçada (curb line) do fim da via até o pino do endereço.
+     * Traça a rota moderna em estilo Flat Minimalista (Orbi Design System / Uber):
+     * Linha sólida direta com Azul Orbi (#2557D6) e terminação arredondada, sem contorno/casing
+     * para um visual clean e moderno.
      */
     private void drawSolidPolyline(List<LatLng> points) {
         currentRoutePoints = points;
@@ -1753,20 +1772,10 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
 
         clearRoutePolyline();
 
-        routePolylineCasing = googleMap.addPolyline(new PolylineOptions()
-                .addAll(points)
-                .width(28f)
-                .color(0xFF0A2E70) // Contorno azul-marinho profundo de alto contraste
-                .startCap(new RoundCap())
-                .endCap(new RoundCap())
-                .jointType(JointType.ROUND)
-                .geodesic(true)
-                .zIndex(9));
-
         routePolyline = googleMap.addPolyline(new PolylineOptions()
                 .addAll(points)
                 .width(18f)
-                .color(0xFF1A73E8) // Azul vibrante oficial Google Maps Navigation
+                .color(0xFF2557D6) // Azul Orbi oficial (#2557D6)
                 .startCap(new RoundCap())
                 .endCap(new RoundCap())
                 .jointType(JointType.ROUND)
@@ -1783,8 +1792,8 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
                 List<PatternItem> dotPattern = Arrays.asList(new Dot(), new Gap(14f));
                 curbWalkingPolyline = googleMap.addPolyline(new PolylineOptions()
                         .add(lastRoadPoint, currentTargetLatLng)
-                        .width(12f)
-                        .color(0xFF64748B)
+                        .width(10f)
+                        .color(0xFF666666)
                         .pattern(dotPattern)
                         .zIndex(8));
             }
@@ -2064,6 +2073,7 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
             btnDialogConfirm.setText(R.string.btn_confirm_skip);
             btnDialogConfirm.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.nav_action_skip));
         }
+        btnDialogConfirm.setTextColor(ContextCompat.getColor(this, R.color.surface));
 
         btnDialogConfirm.setEnabled(false);
         rgReasons.setOnCheckedChangeListener((group, checkedId) -> {

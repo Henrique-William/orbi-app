@@ -53,4 +53,10 @@ public interface OrbiApiService {
 
     @PATCH("api/deliveries/{id}/skip")
     Call<Void> skipDelivery(@Path("id") long id, @Body DeliveryDetailsDto body);
+
+    @POST("api/benchmark/run")
+    Call<Object> runBenchmark(@Body Object request);
+
+    @GET("api/benchmark/latest")
+    Call<Object> getLatestBenchmark();
 }

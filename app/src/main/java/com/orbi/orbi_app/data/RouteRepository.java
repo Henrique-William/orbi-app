@@ -789,9 +789,13 @@ public class RouteRepository {
         int estDuration = (int) Math.round(dto.getTotalDistance() * 2.5);
         if (estDuration <= 0) estDuration = 30;
 
+        String routeCode = (dto.getName() != null && !dto.getName().trim().isEmpty())
+                ? dto.getName().trim()
+                : "ROTA-ORBI-" + dto.getId();
+
         return new Route(
                 routeIdStr,
-                "ROTA-ORBI-" + dto.getId(),
+                routeCode,
                 dto.getDriverInfo() != null ? dto.getDriverInfo().getUserId() : "",
                 rs,
                 estDuration,

@@ -3,7 +3,6 @@ package com.orbi.orbi_app.ui.map;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -28,25 +27,35 @@ import androidx.core.content.ContextCompat;
 
 import com.orbi.orbi_app.R;
 
+/**
+ * Botão "segure para confirmar" (Orbi Design System · .m3-hold-btn).
+ * Pílula neutra (surface + borda 1dp) que é preenchida da esquerda para a direita
+ * em tom carbono durante {@link #HOLD_DURATION_MS}. Ao completar, dispara o listener.
+ */
 public class RadialHoldButton extends FrameLayout {
 
     public interface OnHoldTriggeredListener {
         void onTriggered();
     }
 
-    private static final long HOLD_DURATION_MS = 3000L;
+    private static final long HOLD_DURATION_MS = 1000L;
 
-    private int neutralBgColor;
-    private int neutralTextColor;
-    private int radialColor;
+    private int surfaceColor;
+    private int lineColor;
+    private int inkColor;
+    private int fillColor;
     private float cornerRadiusPx;
+    private float strokePx;
 
     private final Paint bgPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final Paint radialPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint strokePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path clipPath = new Path();
     private final RectF boundsRect = new RectF();
+    private final RectF fillRect = new RectF();
 
-    private float radialProgress = 0f; // 0.0f a 1.0f
+    private float progress = 0f;
+    private boolean contentInverted = false;
     private ValueAnimator holdAnimator;
     private ValueAnimator collapseAnimator;
     private boolean isTriggered = false;
@@ -57,74 +66,71 @@ public class RadialHoldButton extends FrameLayout {
 
     public RadialHoldButton(@NonNull Context context) {
         super(context);
-        init(context, null);
+        init(context);
     }
 
     public RadialHoldButton(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
-        init(context, attrs);
+        init(context);
     }
 
     public RadialHoldButton(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context, attrs);
+        init(context);
     }
 
-    private void init(Context context, @Nullable AttributeSet attrs) {
+    private void init(Context context) {
         setWillNotDraw(false);
         setClickable(true);
         setFocusable(true);
 
         float density = getResources().getDisplayMetrics().density;
-        cornerRadiusPx = 14f * density;
+        cornerRadiusPx = 999f * density;
+        strokePx = 1f * density;
 
-        // Cores neutras padrão
-        neutralBgColor = ContextCompat.getColor(context, R.color.surface_container_high);
-        neutralTextColor = ContextCompat.getColor(context, R.color.on_surface);
-        radialColor = ContextCompat.getColor(context, R.color.primary);
+        surfaceColor = ContextCompat.getColor(context, R.color.surface);
+        lineColor = ContextCompat.getColor(context, R.color.outline_variant);
+        inkColor = ContextCompat.getColor(context, R.color.on_surface);
+        fillColor = inkColor;
 
-        bgPaint.setColor(neutralBgColor);
-        bgPaint.setStyle(Paint.Style.FILL);
+        bgPaint.setColor(surfaceColor);
+        strokePaint.setStyle(Paint.Style.STROKE);
+        strokePaint.setStrokeWidth(strokePx);
+        strokePaint.setColor(lineColor);
+        fillPaint.setColor(fillColor);
 
-        radialPaint.setColor(radialColor);
-        radialPaint.setStyle(Paint.Style.FILL);
-
-        // Layout de conteúdo (ícone e texto limpos)
-        LinearLayout contentLayout = new LinearLayout(context);
-        contentLayout.setOrientation(LinearLayout.HORIZONTAL);
-        contentLayout.setGravity(Gravity.CENTER);
+        LinearLayout content = new LinearLayout(context);
+        content.setOrientation(LinearLayout.HORIZONTAL);
+        content.setGravity(Gravity.CENTER);
         LayoutParams contentParams = new LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         contentParams.gravity = Gravity.CENTER;
-        addView(contentLayout, contentParams);
+        addView(content, contentParams);
 
         ivIcon = new ImageView(context);
-        int iconSize = (int) (20 * density);
+        int iconSize = (int) (18 * density);
         LinearLayout.LayoutParams iconParams = new LinearLayout.LayoutParams(iconSize, iconSize);
         iconParams.rightMargin = (int) (8 * density);
-        ivIcon.setLayoutParams(iconParams);
-        contentLayout.addView(ivIcon);
+        content.addView(ivIcon, iconParams);
 
         tvLabel = new TextView(context);
-        tvLabel.setTextSize(15f);
+        tvLabel.setTextSize(14f);
         tvLabel.setTypeface(null, android.graphics.Typeface.BOLD);
-        tvLabel.setTextColor(neutralTextColor);
-        contentLayout.addView(tvLabel);
+        content.addView(tvLabel);
 
+        applyContentColor(false);
         setupTouch();
     }
 
-    public void setButtonConfig(int iconResId, String text, int radialColor) {
-        this.radialColor = radialColor;
-        this.radialPaint.setColor(radialColor);
-
-        if (ivIcon != null && iconResId != 0) {
-            ivIcon.setImageResource(iconResId);
-            ivIcon.setColorFilter(radialColor);
-        }
-        if (tvLabel != null && text != null) {
+    /** Configura ícone, texto e cor do preenchimento (use uma cor monocromática). */
+    public void setButtonConfig(int iconResId, String text, int fillColor) {
+        this.fillColor = fillColor;
+        fillPaint.setColor(fillColor);
+        if (iconResId != 0) ivIcon.setImageResource(iconResId);
+        if (text != null) {
             tvLabel.setText(text);
-            tvLabel.setTextColor(radialColor);
+            setContentDescription(text + " (segure 1 segundo)");
         }
+        applyContentColor(contentInverted);
         invalidate();
     }
 
@@ -132,43 +138,48 @@ public class RadialHoldButton extends FrameLayout {
         this.triggeredListener = listener;
     }
 
+    private void applyContentColor(boolean inverted) {
+        contentInverted = inverted;
+        int color = inverted ? surfaceColor : inkColor;
+        tvLabel.setTextColor(color);
+        ivIcon.setColorFilter(color);
+    }
+
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         boundsRect.set(0, 0, w, h);
+        float r = Math.min(cornerRadiusPx, h / 2f);
         clipPath.reset();
-        clipPath.addRoundRect(boundsRect, cornerRadiusPx, cornerRadiusPx, Path.Direction.CW);
+        clipPath.addRoundRect(boundsRect, r, r, Path.Direction.CW);
     }
 
     @Override
     protected void dispatchDraw(Canvas canvas) {
+        float r = Math.min(cornerRadiusPx, getHeight() / 2f);
         canvas.save();
         canvas.clipPath(clipPath);
+        canvas.drawRoundRect(boundsRect, r, r, bgPaint);
 
-        // 1. Fundo neutro
-        canvas.drawRoundRect(boundsRect, cornerRadiusPx, cornerRadiusPx, bgPaint);
-
-        // 2. Preenchimento radial expandindo do centro para as extremidades
-        if (radialProgress > 0f) {
-            float cx = getWidth() / 2f;
-            float cy = getHeight() / 2f;
-            float maxRadius = (float) Math.hypot(cx, cy);
-            float currentRadius = maxRadius * radialProgress;
-
-            canvas.drawCircle(cx, cy, currentRadius, radialPaint);
-        }
-
-        // 3. Atualiza cor do texto/ícone conforme o progresso para contraste perfeito
-        if (radialProgress > 0.45f) {
-            tvLabel.setTextColor(Color.WHITE);
-            ivIcon.setColorFilter(Color.WHITE);
-        } else {
-            tvLabel.setTextColor(radialColor);
-            ivIcon.setColorFilter(radialColor);
+        if (progress > 0f) {
+            fillRect.set(0, 0, getWidth() * progress, getHeight());
+            canvas.drawRect(fillRect, fillPaint);
         }
 
         super.dispatchDraw(canvas);
         canvas.restore();
+
+        float half = strokePx / 2f;
+        canvas.drawRoundRect(half, half, getWidth() - half, getHeight() - half, r, r, strokePaint);
+    }
+
+    private void setProgress(float value) {
+        progress = value;
+        boolean shouldInvert = progress > 0.5f;
+        if (shouldInvert != contentInverted) {
+            applyContentColor(shouldInvert);
+        }
+        invalidate();
     }
 
     private void setupTouch() {
@@ -176,34 +187,24 @@ public class RadialHoldButton extends FrameLayout {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
                     isTriggered = false;
+                    if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(true);
                     v.animate().scaleX(0.97f).scaleY(0.97f).setDuration(100).start();
                     v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
 
-                    if (collapseAnimator != null && collapseAnimator.isRunning()) {
-                        collapseAnimator.cancel();
-                    }
-                    if (holdAnimator != null && holdAnimator.isRunning()) {
-                        holdAnimator.cancel();
-                    }
+                    if (collapseAnimator != null) collapseAnimator.cancel();
+                    if (holdAnimator != null) holdAnimator.cancel();
 
-                    holdAnimator = ValueAnimator.ofFloat(radialProgress, 1.0f);
-                    long remainingTime = (long) (HOLD_DURATION_MS * (1.0f - radialProgress));
-                    holdAnimator.setDuration(Math.max(100, remainingTime));
+                    holdAnimator = ValueAnimator.ofFloat(progress, 1f);
+                    holdAnimator.setDuration(Math.max(80L, (long) (HOLD_DURATION_MS * (1f - progress))));
                     holdAnimator.setInterpolator(new LinearInterpolator());
                     holdAnimator.addUpdateListener(anim -> {
-                        radialProgress = (float) anim.getAnimatedValue();
-                        invalidate();
-
-                        if (radialProgress >= 1.0f && !isTriggered) {
+                        setProgress((float) anim.getAnimatedValue());
+                        if (progress >= 1f && !isTriggered) {
                             isTriggered = true;
                             triggerVibration();
-                            v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(150).start();
-                            radialProgress = 0f;
-                            invalidate();
-
-                            if (triggeredListener != null) {
-                                triggeredListener.onTriggered();
-                            }
+                            v.animate().scaleX(1f).scaleY(1f).setDuration(150).start();
+                            if (triggeredListener != null) triggeredListener.onTriggered();
+                            v.postDelayed(() -> animateCollapse(), 250);
                         }
                     });
                     holdAnimator.start();
@@ -211,25 +212,24 @@ public class RadialHoldButton extends FrameLayout {
 
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
-                    if (holdAnimator != null) {
-                        holdAnimator.cancel();
-                    }
-
-                    if (!isTriggered && radialProgress > 0f) {
-                        collapseAnimator = ValueAnimator.ofFloat(radialProgress, 0f);
-                        collapseAnimator.setDuration(180);
-                        collapseAnimator.setInterpolator(new DecelerateInterpolator());
-                        collapseAnimator.addUpdateListener(anim -> {
-                            radialProgress = (float) anim.getAnimatedValue();
-                            invalidate();
-                        });
-                        collapseAnimator.start();
-                    }
+                    if (getParent() != null) getParent().requestDisallowInterceptTouchEvent(false);
+                    v.animate().scaleX(1f).scaleY(1f).setDuration(120).start();
+                    if (holdAnimator != null) holdAnimator.cancel();
+                    if (!isTriggered) animateCollapse();
                     return true;
             }
-            return false;
+            return true;
         });
+    }
+
+    private void animateCollapse() {
+        if (progress <= 0f) return;
+        if (collapseAnimator != null) collapseAnimator.cancel();
+        collapseAnimator = ValueAnimator.ofFloat(progress, 0f);
+        collapseAnimator.setDuration(200);
+        collapseAnimator.setInterpolator(new DecelerateInterpolator());
+        collapseAnimator.addUpdateListener(anim -> setProgress((float) anim.getAnimatedValue()));
+        collapseAnimator.start();
     }
 
     private void triggerVibration() {
@@ -238,9 +238,9 @@ public class RadialHoldButton extends FrameLayout {
             Vibrator vibrator = (Vibrator) getContext().getSystemService(Context.VIBRATOR_SERVICE);
             if (vibrator != null && vibrator.hasVibrator()) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator.vibrate(VibrationEffect.createOneShot(140, VibrationEffect.DEFAULT_AMPLITUDE));
+                    vibrator.vibrate(VibrationEffect.createOneShot(80, VibrationEffect.DEFAULT_AMPLITUDE));
                 } else {
-                    vibrator.vibrate(140);
+                    vibrator.vibrate(80);
                 }
             }
         } catch (Exception ignored) {

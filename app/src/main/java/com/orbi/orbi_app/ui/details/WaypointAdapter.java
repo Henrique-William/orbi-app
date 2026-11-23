@@ -69,7 +69,6 @@ public class WaypointAdapter extends RecyclerView.Adapter<WaypointAdapter.Waypoi
         private final TextView tvRecipient;
         private final TextView tvWaypointStatus;
         private final TextView tvAddress;
-        private final MaterialButton btnPhone;
         private final TextView tvJustification;
 
         WaypointViewHolder(@NonNull View itemView) {
@@ -82,7 +81,6 @@ public class WaypointAdapter extends RecyclerView.Adapter<WaypointAdapter.Waypoi
             tvRecipient = itemView.findViewById(R.id.tvRecipient);
             tvWaypointStatus = itemView.findViewById(R.id.tvWaypointStatus);
             tvAddress = itemView.findViewById(R.id.tvAddress);
-            btnPhone = itemView.findViewById(R.id.btnPhone);
             tvJustification = itemView.findViewById(R.id.tvJustification);
         }
 
@@ -116,22 +114,6 @@ public class WaypointAdapter extends RecyclerView.Adapter<WaypointAdapter.Waypoi
             tvRecipient.setAlpha(handled ? 0.72f : 1f);
 
             viewTimelineLine.setVisibility(isLast ? View.INVISIBLE : View.VISIBLE);
-
-            // Telefone: toque para discar (não requer permissão)
-            String phone = waypoint.getRecipientPhone();
-            if (!TextUtils.isEmpty(phone)) {
-                btnPhone.setVisibility(View.VISIBLE);
-                btnPhone.setText(phone);
-                btnPhone.setContentDescription(context.getString(R.string.cd_call_recipient, waypoint.getRecipientName()));
-                btnPhone.setOnClickListener(v -> {
-                    Intent dial = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + phone.replaceAll("[^0-9+]", "")));
-                    if (dial.resolveActivity(context.getPackageManager()) != null) {
-                        context.startActivity(dial);
-                    }
-                });
-            } else {
-                btnPhone.setVisibility(View.GONE);
-            }
 
             if (!TextUtils.isEmpty(waypoint.getJustification())) {
                 tvJustification.setVisibility(View.VISIBLE);

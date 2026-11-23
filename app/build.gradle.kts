@@ -10,7 +10,9 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 val mapsApiKey: String = localProperties.getProperty("MAPS_API_KEY")
+    ?: localProperties.getProperty("GOOGLE_MAPS_API_KEY")
     ?: System.getenv("MAPS_API_KEY")
+    ?: System.getenv("GOOGLE_MAPS_API_KEY")
     ?: ""
 
 android {
@@ -47,6 +49,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all {
+                it.jvmArgs(
+                    "-XX:+EnableDynamicAgentLoading",
+                    "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                    "--add-opens=java.base/java.util=ALL-UNNAMED"
+                )
+            }
+        }
+    }
 }
 
 dependencies {
@@ -64,6 +79,10 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
     testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)
 }
