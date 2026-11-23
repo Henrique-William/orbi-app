@@ -20,35 +20,20 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingStart="24dp"
-        android:paddingTop="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="4dp"
         android:paddingEnd="12dp">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/tvDate"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?attr/textAppearanceLabelLarge"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                tools:text="Terça-feira, 20 de outubro" />
-
-            <TextView
-                android:id="@+id/tvGreeting"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:accessibilityHeading="true"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:textAppearance="?attr/textAppearanceHeadlineMedium"
-                android:textColor="?attr/colorOnSurface"
-                tools:text="Olá, Carlos" />
-        </LinearLayout>
+            android:accessibilityHeading="true"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
+            android:textColor="?attr/colorOnSurface"
+            android:textStyle="bold"
+            tools:text="Terça-feira, 20 de outubro" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogout"
@@ -58,31 +43,6 @@
             android:contentDescription="@string/cd_logout"
             android:tooltipText="@string/btn_logout"
             app:icon="@drawable/ic_logout" />
-    </LinearLayout>
-
-    <!-- Status de sincronização -->
-    <LinearLayout
-        android:id="@+id/layoutSyncStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="8dp"
-        android:accessibilityLiveRegion="polite"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
-
-        <ImageView
-            android:id="@+id/ivApiStatus"
-            style="@style/Widget.Orbi.MetaIcon"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
-            android:src="@drawable/ic_cloud_done" />
-
-        <TextView
-            android:id="@+id/tvApiStatus"
-            style="@style/Widget.Orbi.MetaText"
-            android:text="@string/sync_status_syncing"
-            android:textAppearance="?attr/textAppearanceLabelMedium" />
     </LinearLayout>
 
     <!-- Filtros -->

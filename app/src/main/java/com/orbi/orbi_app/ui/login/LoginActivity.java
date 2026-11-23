@@ -40,7 +40,6 @@ public class LoginActivity extends AppCompatActivity {
     private static final String SERVER_EMULATOR = SessionManager.DEFAULT_EMULATOR_URL;
     private static final String SERVER_LAN = SessionManager.DEFAULT_LAN_URL;
     private static final String SERVER_LOCAL = "http://localhost:8080/";
-    private static final String DEMO_EMAIL = "carlos.silva@exemplo.com";
 
     private View rootLayout;
     private Chip chipServerUrl;
@@ -49,7 +48,6 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText etEmail;
     private TextInputEditText etPassword;
     private MaterialButton btnLogin;
-    private MaterialButton btnOfflineMode;
     private ProgressBar progressBarLogin;
     private SessionManager sessionManager;
 
@@ -74,7 +72,6 @@ public class LoginActivity extends AppCompatActivity {
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
         btnLogin = findViewById(R.id.btnLogin);
-        btnOfflineMode = findViewById(R.id.btnOfflineMode);
         progressBarLogin = findViewById(R.id.progressBarLogin);
 
         // Edge-to-edge: respeita barras do sistema e o teclado
@@ -85,7 +82,6 @@ public class LoginActivity extends AppCompatActivity {
         chipServerUrl.setOnClickListener(v -> showServerConfigDialog());
 
         btnLogin.setOnClickListener(v -> performLogin());
-        btnOfflineMode.setOnClickListener(v -> handleOfflineFallback(textOf(etEmail)));
 
         etPassword.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -219,7 +215,7 @@ public class LoginActivity extends AppCompatActivity {
                         .setIcon(R.drawable.ic_cloud_off)
                         .setTitle(R.string.login_connection_failed_title)
                         .setMessage(getString(R.string.login_connection_failed_message, sessionManager.getServerUrl()))
-                        .setPositiveButton(R.string.btn_demo, (d, w) -> handleOfflineFallback(email))
+                        .setPositiveButton(R.string.btn_retry, (d, w) -> performLogin())
                         .setNegativeButton(R.string.btn_change_server, (d, w) -> showServerConfigDialog())
                         .setNeutralButton(R.string.btn_close, null)
                         .show();
@@ -227,18 +223,8 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    private void handleOfflineFallback(String email) {
-        if (TextUtils.isEmpty(email)) email = DEMO_EMAIL;
-        String fallbackToken = "offline_jwt_token_" + System.currentTimeMillis();
-        String driverName = "Carlos Silva";
-        sessionManager.saveSession(email, fallbackToken, driverName, "driver_1");
-        Toast.makeText(this, R.string.login_offline_toast, Toast.LENGTH_SHORT).show();
-        navigateToHome();
-    }
-
     private void setLoading(boolean isLoading) {
         btnLogin.setEnabled(!isLoading);
-        btnOfflineMode.setEnabled(!isLoading);
         tilEmail.setEnabled(!isLoading);
         tilPassword.setEnabled(!isLoading);
         btnLogin.setText(isLoading ? "" : getString(R.string.btn_login));

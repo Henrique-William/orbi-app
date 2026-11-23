@@ -27,10 +27,9 @@ public class RouteRepository {
     private static RouteRepository instance;
     private final List<Route> cachedRoutes = new ArrayList<>();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private boolean isUsingSampleData = true;
 
     private RouteRepository() {
-        initSampleData();
+        cachedRoutes.clear();
     }
 
     public static synchronized RouteRepository getInstance() {
@@ -42,43 +41,6 @@ public class RouteRepository {
 
     public synchronized void resetForNewSession() {
         cachedRoutes.clear();
-        isUsingSampleData = false;
-    }
-
-    private void initSampleData() {
-        cachedRoutes.clear();
-        isUsingSampleData = true;
-        // Dados de resiliência e fallback alinhados com a Orbi API
-        List<Waypoint> waypoints1 = new ArrayList<>();
-        waypoints1.add(new Waypoint(1L, "1", 1, "Av. Paulista, 1578 - Bela Vista, São Paulo", -23.5614, -46.6559, WaypointStatus.IN_TRANSIT));
-        waypoints1.add(new Waypoint(2L, "1", 2, "Rua Augusta, 1200 - Consolação, São Paulo", -23.5532, -46.6575, WaypointStatus.AT_PICKUP));
-        waypoints1.add(new Waypoint(3L, "1", 3, "Rua da Consolação, 2400 - Cerqueira César, São Paulo", -23.5578, -46.6660, WaypointStatus.AT_PICKUP));
-        waypoints1.add(new Waypoint(4L, "1", 4, "Al. Santos, 980 - Jardim Paulista, São Paulo", -23.5670, -46.6530, WaypointStatus.AT_PICKUP));
-
-        cachedRoutes.add(new Route("1", "ROTA-ORBI-01", "driver_1", RouteStatus.IN_PROGRESS, 45, waypoints1));
-
-        List<Waypoint> waypoints2 = new ArrayList<>();
-        waypoints2.add(new Waypoint(5L, "2", 1, "Av. Brigadeiro Faria Lima, 3477 - Itaim Bibi, São Paulo", -23.5855, -46.6811, WaypointStatus.AT_PICKUP));
-        waypoints2.add(new Waypoint(6L, "2", 2, "Rua Funchal, 418 - Vila Olímpia, São Paulo", -23.5930, -46.6890, WaypointStatus.AT_PICKUP));
-        waypoints2.add(new Waypoint(7L, "2", 3, "Av. das Nações Unidas, 12555 - Brooklin, São Paulo", -23.6080, -46.6970, WaypointStatus.AT_PICKUP));
-
-        cachedRoutes.add(new Route("2", "ROTA-ORBI-02", "driver_1", RouteStatus.ASSIGNED, 60, waypoints2));
-
-        List<Waypoint> waypoints3 = new ArrayList<>();
-        waypoints3.add(new Waypoint(8L, "3", 1, "Rua Oscar Freire, 850 - Pinheiros, São Paulo", -23.5645, -46.6710, WaypointStatus.CANCELLED));
-        waypoints3.add(new Waypoint(9L, "3", 2, "Rua Teodoro Sampaio, 1400 - Pinheiros, São Paulo", -23.5590, -46.6800, WaypointStatus.CANCELLED));
-
-        cachedRoutes.add(new Route("3", "ROTA-ORBI-03", "driver_1", RouteStatus.CANCELLED, 35, waypoints3));
-
-        List<Waypoint> waypoints4 = new ArrayList<>();
-        Waypoint c1 = new Waypoint(10L, "4", 1, "Rua Haddock Lobo, 595 - Cerqueira César, São Paulo", -23.5580, -46.6620, WaypointStatus.DELIVERED);
-        c1.setCompletedAt(System.currentTimeMillis() - 7200000);
-        Waypoint c2 = new Waypoint(11L, "4", 2, "Rua Bela Cintra, 1100 - Consolação, São Paulo", -23.5550, -46.6600, WaypointStatus.DELIVERED);
-        c2.setCompletedAt(System.currentTimeMillis() - 3600000);
-        waypoints4.add(c1);
-        waypoints4.add(c2);
-
-        cachedRoutes.add(new Route("4", "ROTA-ORBI-04", "driver_1", RouteStatus.COMPLETED, 30, waypoints4));
     }
 
     /**
@@ -95,11 +57,6 @@ public class RouteRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     List<RouteResponseDto> dtos = response.body();
                     List<Route> convertedRoutes = new ArrayList<>();
-
-                    if (isUsingSampleData) {
-                        cachedRoutes.clear();
-                        isUsingSampleData = false;
-                    }
 
                     for (RouteResponseDto dto : dtos) {
                         // Filtragem por motorista: exibe rotas atribuídas ao motorista ou não atribuídas se logado
@@ -235,8 +192,8 @@ public class RouteRepository {
 
                     Route r = getRouteById(routeId);
                     if (r != null) {
-                        // Preserva estados terminais já atualizados localmente (apenas se não forem dados de exemplo)
-                        if (!isUsingSampleData && r.getWaypoints() != null) {
+                        // Preserva estados terminais já atualizados localmente
+                        if (r.getWaypoints() != null) {
                             for (Waypoint realWp : realWaypoints) {
                                 for (Waypoint localWp : r.getWaypoints()) {
                                     if (localWp.getDeliveryId() == realWp.getDeliveryId() && localWp.isTerminal()) {
@@ -970,45 +927,5 @@ public class RouteRepository {
             default:
                 return RouteStatus.ASSIGNED;
         }
-    }
-
-    private List<Waypoint> generateFallbackWaypoints(String routeId, int stops) {
-        List<Waypoint> list = new ArrayList<>();
-        String[][] sampleAddresses = {
-                {"Av. Paulista, 1578 - Bela Vista, São Paulo", "-23.5614", "-46.6559", "Carlos Silva", "(11) 98765-4321"},
-                {"Rua Augusta, 1200 - Consolação, São Paulo", "-23.5532", "-46.6575", "Mariana Costa", "(11) 97654-3210"},
-                {"Rua da Consolação, 2400 - Cerqueira César, São Paulo", "-23.5578", "-46.6660", "Roberto Souza", "(11) 96543-2109"},
-                {"Al. Santos, 980 - Jardim Paulista, São Paulo", "-23.5670", "-46.6530", "Ana Paula Ramos", "(11) 95432-1098"},
-                {"Av. Brigadeiro Faria Lima, 3477 - Itaim Bibi, São Paulo", "-23.5855", "-46.6811", "Lucas Fernandes", "(11) 94321-0987"},
-                {"Rua Funchal, 418 - Vila Olímpia, São Paulo", "-23.5930", "-46.6890", "Beatriz Lima", "(11) 93210-9876"},
-                {"Av. das Nações Unidas, 12555 - Brooklin, São Paulo", "-23.6080", "-46.6970", "Juliana Martins", "(11) 92109-8765"},
-                {"Rua Oscar Freire, 850 - Pinheiros, São Paulo", "-23.5645", "-46.6710", "Gabriel Oliveira", "(11) 91098-7654"}
-        };
-
-        int count = Math.max(1, Math.min(stops, 10));
-        long baseDeliveryId = parseNumericId(routeId) * 100L;
-
-        for (int i = 0; i < count; i++) {
-            String[] sample = sampleAddresses[i % sampleAddresses.length];
-            long deliveryId = baseDeliveryId + (i + 1);
-            double lat = Double.parseDouble(sample[1]);
-            double lng = Double.parseDouble(sample[2]);
-            Waypoint wp = new Waypoint(
-                    String.valueOf(deliveryId),
-                    routeId,
-                    i + 1,
-                    sample[3],
-                    sample[4],
-                    sample[0],
-                    "",
-                    "",
-                    "São Paulo",
-                    lat,
-                    lng,
-                    WaypointStatus.AT_PICKUP
-            );
-            list.add(wp);
-        }
-        return list;
     }
 }

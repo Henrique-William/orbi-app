@@ -141,16 +141,6 @@
                 app:trackThickness="3dp" />
         </FrameLayout>
 
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnOfflineMode"
-            style="@style/Widget.Orbi.Button.Text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="8dp"
-            android:text="@string/btn_offline_mode"
-            app:icon="@drawable/ic_cloud_off" />
-
         <Space
             android:layout_width="match_parent"
             android:layout_height="0dp"

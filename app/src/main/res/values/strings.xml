@@ -40,7 +40,7 @@
     <string name="login_http_error">Não foi possível entrar (erro %1$d). Tente novamente.</string>
     <string name="login_offline_toast">Modo demonstração ativado</string>
     <string name="login_connection_failed_title">Sem conexão com o servidor</string>
-    <string name="login_connection_failed_message">Não foi possível alcançar %1$s.\n\nVerifique sua conexão ou o endereço do servidor. Você também pode continuar no modo demonstração.</string>
+    <string name="login_connection_failed_message">Não foi possível alcançar %1$s.\n\nVerifique sua conexão ou o endereço do servidor.</string>
     <string name="btn_change_server">Trocar servidor</string>
     <string name="btn_demo">Modo demonstração</string>
     <string name="version_label">Versão %1$s</string>

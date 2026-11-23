@@ -665,7 +665,7 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
                     if ((fine != null && fine) || (coarse != null && coarse)) {
                         startLocationTracking();
                     } else {
-                        setGpsStatus(R.string.nav_gps_demo, ContextCompat.getColor(this, R.color.nav_action_skip));
+                        setGpsStatus(R.string.nav_gps_acquiring, ContextCompat.getColor(this, R.color.nav_action_skip));
                         useFallbackDriverPosition();
                     }
                 }
@@ -1091,7 +1091,7 @@ public class NavigationMapActivity extends AppCompatActivity implements OnMapRea
             LatLng lookAheadTarget = computeOffsetLatLng(currentDriverLatLng, 80.0, currentAzimuth);
             CameraPosition cameraPosition = new CameraPosition.Builder()
                     .target(lookAheadTarget)
-                    .zoom(15.8f)
+                    .zoom(17.0f)
                     .tilt(45.0f)
                     .bearing(currentAzimuth)
                     .build();

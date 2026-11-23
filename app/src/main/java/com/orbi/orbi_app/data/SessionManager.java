@@ -18,9 +18,10 @@ public class SessionManager {
     private static final String KEY_DRIVER_USER_ID = "driver_user_id";
     private static final String KEY_SERVER_URL = "server_url";
 
+    public static final String DEFAULT_CLOUD_URL = "https://orbi-api-em6s.onrender.com/";
     public static final String DEFAULT_EMULATOR_URL = "http://10.0.2.2:8080/";
     public static final String DEFAULT_LAN_URL = "http://192.168.1.60:8080/";
-    public static final String DEFAULT_SERVER_URL = DEFAULT_EMULATOR_URL;
+    public static final String DEFAULT_SERVER_URL = DEFAULT_CLOUD_URL;
 
     private final SharedPreferences preferences;
 

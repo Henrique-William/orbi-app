@@ -98,6 +98,7 @@ public class RadialHoldButton extends FrameLayout {
         strokePaint.setStrokeWidth(strokePx);
         strokePaint.setColor(lineColor);
         fillPaint.setColor(fillColor);
+        fillPaint.setAlpha(Math.round(255 * 0.25f));
 
         LinearLayout content = new LinearLayout(context);
         content.setOrientation(LinearLayout.HORIZONTAL);
@@ -121,16 +122,17 @@ public class RadialHoldButton extends FrameLayout {
         setupTouch();
     }
 
-    /** Configura ícone, texto e cor do preenchimento (use uma cor monocromática). */
+    /** Configura ícone, texto e cor do preenchimento com 25% de opacidade. */
     public void setButtonConfig(int iconResId, String text, int fillColor) {
         this.fillColor = fillColor;
         fillPaint.setColor(fillColor);
+        fillPaint.setAlpha(Math.round(255 * 0.25f));
         if (iconResId != 0) ivIcon.setImageResource(iconResId);
         if (text != null) {
             tvLabel.setText(text);
             setContentDescription(text + " (segure 1 segundo)");
         }
-        applyContentColor(contentInverted);
+        applyContentColor(false);
         invalidate();
     }
 
@@ -139,10 +141,9 @@ public class RadialHoldButton extends FrameLayout {
     }
 
     private void applyContentColor(boolean inverted) {
-        contentInverted = inverted;
-        int color = inverted ? surfaceColor : inkColor;
-        tvLabel.setTextColor(color);
-        ivIcon.setColorFilter(color);
+        contentInverted = false;
+        tvLabel.setTextColor(inkColor);
+        ivIcon.setColorFilter(inkColor);
     }
 
     @Override
@@ -175,10 +176,6 @@ public class RadialHoldButton extends FrameLayout {
 
     private void setProgress(float value) {
         progress = value;
-        boolean shouldInvert = progress > 0.5f;
-        if (shouldInvert != contentInverted) {
-            applyContentColor(shouldInvert);
-        }
         invalidate();
     }
 

@@ -47,9 +47,6 @@ public class HomeActivity extends AppCompatActivity {
 
     private View rootLayout;
     private TextView tvDate;
-    private TextView tvGreeting;
-    private ImageView ivApiStatus;
-    private TextView tvApiStatus;
     private MaterialButton btnLogout;
     private ChipGroup chipGroupStatus;
     private SwipeRefreshLayout swipeRefreshHome;
@@ -72,9 +69,6 @@ public class HomeActivity extends AppCompatActivity {
 
         rootLayout = findViewById(R.id.rootLayout);
         tvDate = findViewById(R.id.tvDate);
-        tvGreeting = findViewById(R.id.tvGreeting);
-        ivApiStatus = findViewById(R.id.ivApiStatus);
-        tvApiStatus = findViewById(R.id.tvApiStatus);
         btnLogout = findViewById(R.id.btnLogout);
         chipGroupStatus = findViewById(R.id.chipGroupStatus);
         swipeRefreshHome = findViewById(R.id.swipeRefreshHome);
@@ -101,12 +95,6 @@ public class HomeActivity extends AppCompatActivity {
     private void setupHeader() {
         String today = new SimpleDateFormat("EEEE, d 'de' MMMM", PT_BR).format(new Date());
         tvDate.setText(capitalize(today));
-
-        String firstName = firstNameOf(sessionManager.getDriverName());
-        tvGreeting.setText(TextUtils.isEmpty(firstName)
-                ? getString(R.string.home_greeting_default)
-                : getString(R.string.home_greeting, firstName));
-
         btnLogout.setOnClickListener(v -> confirmLogout());
     }
 
@@ -148,14 +136,12 @@ public class HomeActivity extends AppCompatActivity {
         if (showFeedback) {
             swipeRefreshHome.setRefreshing(true);
         }
-        setSyncStatus(R.drawable.ic_cloud_done, R.string.sync_status_syncing, 0);
 
         // Chamada real ao endpoint GET /api/route da Orbi API
         repository.fetchRoutesFromApi(this, new RepositoryCallback<List<Route>>() {
             @Override
             public void onSuccess(List<Route> result) {
                 swipeRefreshHome.setRefreshing(false);
-                setSyncStatus(R.drawable.ic_cloud_done, R.string.sync_status_online, R.color.status_completed);
                 loadRoutes(currentFilter);
                 if (showFeedback) {
                     Snackbar.make(rootLayout, R.string.sync_success, Snackbar.LENGTH_SHORT).show();
@@ -165,7 +151,6 @@ public class HomeActivity extends AppCompatActivity {
             @Override
             public void onError(String message) {
                 swipeRefreshHome.setRefreshing(false);
-                setSyncStatus(R.drawable.ic_cloud_off, R.string.sync_status_offline, R.color.status_skipped);
                 loadRoutes(currentFilter);
                 if (showFeedback) {
                     Snackbar.make(rootLayout, message, Snackbar.LENGTH_LONG)
@@ -174,17 +159,6 @@ public class HomeActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    /** Atualiza o indicador de sincronização. color = 0 usa a cor neutra do tema. */
-    private void setSyncStatus(@DrawableRes int icon, @StringRes int text, @ColorRes int color) {
-        int resolved = color == 0
-                ? MaterialColors.getColor(tvApiStatus, com.google.android.material.R.attr.colorOnSurfaceVariant)
-                : ContextCompat.getColor(this, color);
-        ivApiStatus.setImageResource(icon);
-        ImageViewCompat.setImageTintList(ivApiStatus, ColorStateList.valueOf(resolved));
-        tvApiStatus.setText(text);
-        tvApiStatus.setTextColor(resolved);
     }
 
     private void loadRoutes(RouteStatus filter) {
